@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cruscotto concessionaria</title>
+<meta name="description" content="Demo: chiusura di giornata per concessionari multimarca (Jeep, BYD, Volkswagen) con dati fittizi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap" id="dash-root">
+<div class="cv">
+  <header class="cv-head" id="intestazione">
+    <div class="cv-eyebrow">Chiusura di giornata · export dal gestionale · dati dimostrativi</div>
+    <h1 class="cv-title">Cruscotto concessionaria</h1>
+    <p class="cv-takeaway" id="takeaway"><span class="dash-skeleton" data-source="kpi">—</span></p>
+  </header>
+
+  <div class="cv-controls" id="filtri">
+    <div class="cv-day">
+      <button class="cv-iconbtn" id="btn-prev" aria-label="Giornata precedente">‹</button>
+      <select class="cv-select" id="sel-giorno" aria-label="Giornata" data-source="contratti"></select>
+      <button class="cv-iconbtn" id="btn-next" aria-label="Giornata successiva">›</button>
+    </div>
+    <div class="cv-seg" role="group" aria-label="Periodo" id="seg-vista">
+      <button data-vista="giorno">Giornata</button>
+      <button data-vista="mtd">Mese a data</button>
+    </div>
+    <div class="cv-seg" role="group" aria-label="Brand" id="seg-brand">
+      <button data-brand="Tutti">Tutti i brand</button>
+      <button data-brand="Jeep"><i class="cv-sw"></i>Jeep</button>
+      <button data-brand="BYD"><i class="cv-sw"></i>BYD</button>
+      <button data-brand="Volkswagen"><i class="cv-sw"></i>Volkswagen</button>
+    </div>
+  </div>
+
+  <nav class="cv-tabs" role="tablist" aria-label="Sezioni">
+    <button role="tab" id="tab-vendite" data-tab="vendite">Vendite e margini</button>
+    <button role="tab" id="tab-fi" data-tab="fi">Finanziamenti e assicurazioni</button>
+    <button role="tab" id="tab-usato" data-tab="usato">Usato da permute</button>
+  </nav>
+
+  <!-- VENDITE -->
+  <section class="cv-page" id="pagina-vendite" role="tabpanel" aria-labelledby="tab-vendite">
+    <div class="cv-kpis" id="kpi-vendite">
+      <div class="cv-kpi"><div class="cv-kpi-label">Vetture vendute</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="vetture" data-fmt="int">—</div><div class="cv-kpi-delta"><span data-source="kpi" data-field="d_vetture" data-fmt="dint"></span><span class="cv-reflabel"></span></div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Fatturato netto</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="fatturato_netto" data-fmt="eur">—</div><div class="cv-kpi-delta"><span data-source="kpi" data-field="d_fatturato_pct" data-fmt="dpct"></span><span class="cv-reflabel"></span></div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Margine totale</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="margine_totale" data-fmt="eur">—</div><div class="cv-kpi-delta"><span data-source="kpi" data-field="d_margine_totale_pct" data-fmt="dpct"></span><span class="cv-reflabel"></span></div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Margine medio a vettura</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="margine_medio" data-fmt="eur">—</div><div class="cv-kpi-delta"><span data-source="kpi" data-field="d_margine_medio" data-fmt="deur"></span><span class="cv-reflabel"></span></div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Penetrazione finanziamenti</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="pen_fin" data-fmt="pct">—</div><div class="cv-kpi-delta"><span data-source="kpi" data-field="d_pen_fin" data-fmt="dpt"></span><span class="cv-reflabel"></span></div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Penetrazione assicurazioni</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="pen_ass" data-fmt="pct">—</div><div class="cv-kpi-delta"><span data-source="kpi" data-field="d_pen_ass" data-fmt="dpt"></span><span class="cv-reflabel"></span></div></div>
+    </div>
+
+    <div class="cv-grid">
+      <article class="cv-card" id="card-cascata">
+        <div class="cv-card-head"><h2>Da dove viene il margine</h2><span class="cv-chip cv-periodo"></span></div>
+        <p class="cv-note">Dal margine contrattuale sul listino (listino meno costo d'acquisto) al margine totale, sommando sconti, contributi del brand, costi vettura e provvigioni F&amp;I al netto di quanto va al venditore.</p>
+        <div class="cv-wf dash-skeleton" id="chart-cascata" data-source="kpi"></div>
+      </article>
+      <article class="cv-card" id="card-brand">
+        <div class="cv-card-head"><h2>Brand a confronto</h2><span class="cv-chip cv-periodo"></span></div>
+        <p class="cv-note">Margine veicolo e F&amp;I per brand nello stesso periodo. Clic su una riga per filtrare il cruscotto.</p>
+        <div class="cv-tablebox">
+          <table class="cv-table" id="tab-brand" data-source="kpi" data-row-key="chiave">
+            <thead><tr>
+              <th data-field="brand">Brand</th>
+              <th class="num" data-field="vetture">Vetture</th>
+              <th class="num" data-field="margine_veicolo">Veicolo</th>
+              <th class="num" data-field="margine_fi">F&amp;I</th>
+              <th class="num" data-field="margine_totale">Totale</th>
+              <th class="num" data-field="margine_medio">A vettura</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="cv-note" id="nota-sconto"></p>
+      </article>
+    </div>
+
+    <article class="cv-card" id="card-andamento">
+      <div class="cv-card-head">
+        <h2>Andamento giornaliero</h2>
+        <div class="cv-seg cv-small" role="group" aria-label="Misura" id="seg-misura">
+          <button data-misura="margine_totale">Margine totale</button>
+          <button data-misura="vetture">Vetture</button>
+        </div>
+      </div>
+      <p class="cv-note">Ultime 36 giornate di apertura fino a quella selezionata, per brand. Clic su una colonna per aprire quella giornata.</p>
+      <div class="cv-legend" id="legenda-andamento"></div>
+      <div class="cv-chart dash-skeleton" id="chart-andamento" data-source="kpi"></div>
+    </article>
+
+    <article class="cv-card" id="card-contratti">
+      <div class="cv-card-head">
+        <h2 id="titolo-contratti">Contratti</h2>
+        <span class="cv-chip cv-bad" id="chip-negativi" hidden><span data-source="kpi" data-field="neg_veicolo"></span>&nbsp;<span id="chip-negativi-txt"></span></span>
+      </div>
+      <p class="cv-note">Una riga per contratto, come arriva dal gestionale. Clic su una riga per vedere tutte le voci: vendita, permuta, finanziamento, assicurazione e costi.</p>
+      <input class="cv-search" id="cerca-contratti" type="search" placeholder="Cerca modello, venditore, contratto" aria-label="Cerca nei contratti">
+      <div class="cv-tablebox">
+        <table class="cv-table" id="tab-contratti" data-source="contratti" data-row-key="contratto">
+          <thead><tr>
+            <th data-field="contratto"><button data-sort="contratto">Contratto</button></th>
+            <th data-field="modello"><button data-sort="modello">Modello</button></th>
+            <th class="cv-hide-sm" data-field="venditore"><button data-sort="venditore">Venditore</button></th>
+            <th class="num cv-hide-sm" data-field="prezzo_listino"><button data-sort="prezzo_listino">Listino</button></th>
+            <th class="num cv-hide-sm" data-field="sconto"><button data-sort="sconto">Sconto</button></th>
+            <th class="num cv-hide-sm" data-field="campagna_brand"><button data-sort="campagna_brand">Campagna</button></th>
+            <th class="cv-hide-sm" data-field="permuta_modello"><button data-sort="permuta_modello">Permuta</button></th>
+            <th class="cv-hide-sm" data-field="fin_tipo"><button data-sort="fin_tipo">Finanziamento</button></th>
+            <th class="cv-hide-sm" data-field="ass_tipo"><button data-sort="ass_tipo">Assicurazione</button></th>
+            <th class="num" data-source="margini" data-field="margine_veicolo"><button data-sort="margine_veicolo">Margine veicolo</button></th>
+            <th class="num" data-source="margini" data-field="margine_fi"><button data-sort="margine_fi">F&amp;I</button></th>
+            <th class="num" data-source="margini" data-field="margine_totale"><button data-sort="margine_totale">Totale</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="cv-detail" id="dettaglio" hidden></div>
+    </article>
+  </section>
+
+  <!-- F&I -->
+  <section class="cv-page" id="pagina-fi" role="tabpanel" aria-labelledby="tab-fi" hidden>
+    <div class="cv-kpis">
+      <div class="cv-kpi"><div class="cv-kpi-label">Margine F&amp;I</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="margine_fi" data-fmt="eur">—</div><div class="cv-kpi-delta">provvigioni e rappel, netto venditore</div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">F&amp;I a vettura</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="fi_per_vettura" data-fmt="eur">—</div><div class="cv-kpi-delta">su tutte le vetture vendute</div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Quota F&amp;I sul margine</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="quota_fi" data-fmt="pct">—</div><div class="cv-kpi-delta">del margine totale</div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Importo finanziato</div><div class="cv-kpi-value dash-skeleton" data-source="fi_mix" data-field="importo" data-fmt="eur" data-ambito="Finanziamento">—</div><div class="cv-kpi-delta">capitale erogato dalle finanziarie</div></div>
+    </div>
+    <div class="cv-grid">
+      <article class="cv-card" id="card-finanziamenti">
+        <div class="cv-card-head"><h2>Finanziamenti per tipo</h2><span class="cv-chip cv-periodo"></span></div>
+        <p class="cv-note">TAN medio ponderato sull'importo; il noleggio a lungo termine non ha TAN.</p>
+        <div class="cv-tablebox">
+          <table class="cv-table" id="tab-fin" data-source="fi_mix" data-row-key="chiave">
+            <thead><tr>
+              <th data-field="tipo">Tipo</th>
+              <th class="num" data-field="contratti">Contratti</th>
+              <th class="num" data-field="importo">Finanziato</th>
+              <th class="num" data-field="tasso_medio">TAN medio</th>
+              <th class="num" data-field="provvigioni_rappel">Provv. + rappel</th>
+              <th class="num cv-hide-sm" data-field="provvigioni_venditore">Al venditore</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="cv-card" id="card-assicurazioni">
+        <div class="cv-card-head"><h2>Assicurazioni per tipo</h2><span class="cv-chip cv-periodo"></span></div>
+        <p class="cv-note">Premi annui delle polizze collocate con la vettura.</p>
+        <div class="cv-tablebox">
+          <table class="cv-table" id="tab-ass" data-source="fi_mix" data-row-key="chiave">
+            <thead><tr>
+              <th data-field="tipo">Tipo</th>
+              <th class="num" data-field="contratti">Polizze</th>
+              <th class="num" data-field="importo">Premi</th>
+              <th class="num" data-field="provvigioni_rappel">Provv. + rappel</th>
+              <th class="num cv-hide-sm" data-field="provvigioni_venditore">Al venditore</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+    <article class="cv-card" id="card-venditori">
+      <div class="cv-card-head"><h2>Venditori</h2><span class="cv-chip cv-periodo"></span></div>
+      <p class="cv-note">Le provvigioni venditore sommano la quota su finanziamenti e assicurazioni.</p>
+      <div class="cv-tablebox">
+        <table class="cv-table" id="tab-venditori" data-source="venditori" data-row-key="chiave">
+          <thead><tr>
+            <th data-field="venditore">Venditore</th>
+            <th class="num" data-field="vetture">Vetture</th>
+            <th class="num" data-field="margine_totale">Margine totale</th>
+            <th class="num" data-field="margine_medio">A vettura</th>
+            <th class="num" data-field="pen_fin">Pen. fin.</th>
+            <th class="num" data-field="pen_ass">Pen. ass.</th>
+            <th class="num" data-field="provvigioni_venditore">Provvigioni</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <!-- USATO -->
+  <section class="cv-page" id="pagina-usato" role="tabpanel" aria-labelledby="tab-usato" hidden>
+    <div class="cv-kpis">
+      <div class="cv-kpi"><div class="cv-kpi-label">Permute in giacenza</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="permute" data-fmt="int" data-fascia="Totale">—</div><div class="cv-kpi-delta">vetture ritirate non ancora rivendute</div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Valore a stock</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="costo_stock" data-fmt="eur" data-fascia="Totale">—</div><div class="cv-kpi-delta">valutazione più ripristino</div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Interessi passivi maturati</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="interessi_passivi" data-fmt="eur" data-fascia="Totale">—</div><div class="cv-kpi-delta">dall'ingresso in giacenza a oggi</div></div>
+      <div class="cv-kpi"><div class="cv-kpi-label">Giacenza media</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="giorni_medi" data-fmt="giorni" data-fascia="Totale">—</div><div class="cv-kpi-delta">giorni dal ritiro</div></div>
+    </div>
+    <article class="cv-card" id="card-aging">
+      <div class="cv-card-head"><h2>Anzianità della giacenza</h2><span class="cv-chip" id="chip-situazione"></span></div>
+      <p class="cv-note">Numero di permute per fascia di giorni in stock. Oltre i 60 giorni gli interessi passivi erodono il margine sull'usato.</p>
+      <div class="cv-aging" id="barra-aging" data-source="usato"></div>
+      <div class="cv-legend" id="legenda-aging"></div>
+    </article>
+    <article class="cv-card" id="card-stock">
+      <div class="cv-card-head"><h2>Permute in stock</h2></div>
+      <p class="cv-note">Ordinate dalla più vecchia. Il brand è quello della vettura nuova venduta con la permuta.</p>
+      <div class="cv-tablebox">
+        <table class="cv-table" id="tab-stock" data-source="contratti" data-row-key="contratto">
+          <thead><tr>
+            <th data-field="permuta_modello">Vettura in permuta</th>
+            <th data-field="permuta_data_giacenza">In giacenza dal</th>
+            <th class="num" data-field="permuta_giorni_giacenza">Giorni</th>
+            <th class="num cv-hide-sm" data-field="permuta_valutazione">Valutazione</th>
+            <th class="num" data-field="permuta_costo_stock">Costo stock</th>
+            <th class="num" data-field="permuta_interessi_passivi">Interessi passivi</th>
+            <th class="cv-hide-sm" data-field="modello">Venduta con</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</div>
+  <footer class="piede">
+    <span>Dati fittizi a scopo dimostrativo · importi IVA esclusa</span>
+    <span>Fonte: export di fine giornata dal gestionale · <a href="data/contratti_gestionale.csv" download>scarica i contratti (CSV)</a></span>
+  </footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data/contratti.js"></script>
+<script src="assets/dash.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
