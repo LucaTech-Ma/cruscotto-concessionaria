@@ -87,6 +87,10 @@ Per collegare un gestionale reale basta produrre ogni sera un file con queste co
 
 Gli interessi passivi delle permute restano fuori dal margine del contratto: sono un costo dell'usato e compaiono nella sua scheda.
 
+## Pubblicare una nuova versione
+
+In `index.html` i file di stile, script e dati hanno un numero di versione (`?v=…`). A ogni pubblicazione va cambiato in tutti e quattro i link, sempre lo stesso valore. Altrimenti il browser di chi ha già aperto la pagina può mescolare file vecchi e nuovi e non mostrare i dati.
+
 ## Rigenerare i dati
 
 ```
