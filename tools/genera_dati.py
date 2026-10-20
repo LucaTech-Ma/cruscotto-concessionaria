@@ -68,6 +68,15 @@ VENDITORI = {
     "Volkswagen": ["A. Greco", "F. Moretti", "G. Colombo"],
 }
 
+# Comportamenti che l'analisi del periodo deve saper trovare, come in una concessionaria vera:
+# un venditore che chiude con più sconto, uno che propone poco il finanziamento.
+VENDITORE_PROFILO = {
+    "A. Greco": dict(sconto_extra=0.02, fin=1.0),
+    "F. Moretti": dict(sconto_extra=0.0, fin=0.6),
+}
+# Da metà settembre la finanziaria di BYD rende meno attraenti le sue offerte: calano i finanziamenti.
+CALO_FIN_BYD = date(2026, 9, 15)
+
 PERMUTE = [
     ("Fiat Panda 1.2 (2017)", 4200, 6200),
     ("Fiat 500X 1.3 Mjt (2018)", 8800, 11800),
@@ -140,7 +149,9 @@ for d in giorni_lavorativi():
         nome, alim, pubblico, _peso = random.choices(MODELLI[brand], weights=[m[3] for m in MODELLI[brand]])[0]
         listino = arr(pubblico * random.uniform(1.0, 1.14) / IVA, 50)  # allestimento e optional
         costo_acquisto = arr(listino * (1 - prof["margine"] + random.uniform(-0.006, 0.006)))
-        sconto = arr(listino * random.uniform(*prof["sconto"]))
+        venditore = random.choice(VENDITORI[brand])
+        vp = VENDITORE_PROFILO.get(venditore, dict(sconto_extra=0.0, fin=1.0))
+        sconto = arr(listino * (random.uniform(*prof["sconto"]) + vp["sconto_extra"]))
         campagna = arr(listino * random.uniform(*prof["campagna"])) if random.random() < 0.8 else 0
         bonus = arr(listino * random.uniform(0.003, 0.015)) if random.random() < prof["bonus"] else 0
         prep = arr(random.uniform(220, 460))
@@ -149,7 +160,7 @@ for d in giorni_lavorativi():
 
         r = dict(
             contratto=f"CV26-{progressivo:05d}", data=d.isoformat(), brand=brand, modello=nome,
-            alimentazione=alim, venditore=random.choice(VENDITORI[brand]),
+            alimentazione=alim, venditore=venditore,
             prezzo_listino=listino, sconto=sconto, campagna_brand=campagna, altri_bonus_brand=bonus,
             costo_acquisto=costo_acquisto, costo_preparazione=prep, costo_trasporto=trasporto,
         )
@@ -175,7 +186,8 @@ for d in giorni_lavorativi():
                      permuta_valutazione="", permuta_costo_stock="", permuta_interessi_passivi="", permuta_stato="")
 
         # finanziamento
-        finanziato = random.random() < prof["fin"]
+        calo = 0.45 if brand == "BYD" and d >= CALO_FIN_BYD else 1.0
+        finanziato = random.random() < prof["fin"] * vp["fin"] * calo
         if finanziato:
             tipo = pick(FIN_TIPI)
             anticipo = r.get("permuta_valutazione") or 0
