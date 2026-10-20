@@ -7,7 +7,7 @@
   const SORGENTI = {
     contratti: { csv: 'data/contratti_gestionale.csv', inline: () => window.DATI_CONTRATTI },
   };
-  const PARAMETRI_INIZIALI = { giorno: null, vista: 'giorno', brand: 'Tutti' };
+  const PARAMETRI_INIZIALI = { mese: null, giorno: null, vista: 'giorno', brand: 'Tutti' };
 
   const dataset = {};
   const calcoli = {};

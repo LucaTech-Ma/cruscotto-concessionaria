@@ -8,15 +8,21 @@ I dati sono **fittizi ma verosimili**: 674 contratti Jeep, BYD e Volkswagen, dal
 
 ## Cosa mostra
 
-È pensato per il titolare, non per un analista: si legge dall'alto in basso, una domanda per sezione, con parole di tutti i giorni (niente "penetrazione", "F&I" o "rappel" in primo piano). In alto si sceglie il giorno, il periodo (**Giorno** o **Mese**) e il brand.
+Versione executive per il titolare (decisa da Luca il 20/10/2026): **una schermata da 30 secondi**, con circa 10 numeri, che risponde a tre domande. Sto guadagnando abbastanza questo mese? Dove perdo soldi? Cosa faccio questa settimana? Si legge per mese: in alto si scelgono il mese e il marchio. Tutto il dettaglio sta in "Approfondisci", chiuso finché non serve.
 
-1. **Com'è andata**: prima cosa è stato venduto, poi il margine che ne deriva. Una frase con le quantità colorate (auto vendute, finanziamenti, assicurazioni, margine totale) e il confronto con le ultime 4 settimane o con il mese prima. Sotto, quattro riquadri: auto vendute (incassato, sconto medio, margine), finanziamenti (quanti su quante auto, importo, margine per finanziamento e totale), assicurazioni (polizze, premi, margine per polizza e totale) e, su fondo scuro, il margine totale con la barra divisa nelle tre parti. "Vedi tutti i passaggi" apre la cascata dal listino al margine.
-2. **Obiettivo del mese e Da controllare**, affiancati. L'obiettivo mostra quanto margine (o quante auto) è stato fatto da inizio mese, una barra verso l'obiettivo con il segno di dove dovresti essere oggi (in base ai giorni di apertura, dal lunedì al sabato), un messaggio semplice (avanti, in linea, indietro) e quanto manca, i giorni rimasti e quanto serve al giorno. L'obiettivo suggerito è il risultato del mese prima più il 5%; con "Cambia obiettivo" il concessionario mette il suo, che resta salvato nel browser. Accanto, le cose su cui agire, ognuna con un pulsante che porta al dettaglio.
-   Le voci da controllare:
-   - Auto vendute sotto costo e quanto hanno perso (il pulsante filtra la tabella dei contratti).
-   - Usati fermi da più di 3 mesi (o 2) e interessi già pagati.
-   - Finanziamenti o assicurazioni sotto il solito (compaiono solo in quel caso).
-3. **Dove stai lasciando margine**: la prima versione dell'agente, con calcoli e regole fissi e nessuna AI. Il titolare sceglie un periodo (un mese, un trimestre completo, gli ultimi 30 giorni) e preme "Analizza". Il confronto è con il periodo precedente della stessa lunghezza, quando è nei dati. Il cruscotto cerca gli schemi che tolgono margine e mostra le tre proposte che valgono di più. Ognuna ha il valore stimato in euro al mese, il perché, cosa fare, la regola da cui nasce, l'affidabilità e, quando c'è una leva, il pulsante "Apri nel simulatore". Sotto ci sono gli altri segnali, i rischi (che non tolgono margine oggi ma lo rendono fragile) e cosa i dati non permettono di dire. Con `#analisi` in fondo all'indirizzo la pagina si apre con l'analisi già fatta.
+1. **Margine del mese contro l'obiettivo**: il margine da inizio mese, una barra verso l'obiettivo con il segno di dove dovresti essere oggi (in base ai giorni di apertura, dal lunedì al sabato) e una frase: avanti, in linea o indietro, e quanto serve al giorno da qui a fine mese. L'obiettivo lo mette il titolare ("Imposta l'obiettivo") e resta salvato nel browser. Non c'è un obiettivo suggerito, per decisione di Luca del 20/10/2026: la stagionalità cambia troppo da una concessionaria all'altra. Finché l'obiettivo non c'è, si vede solo il margine del mese.
+2. **Tre numeri**: auto vendute, margine per auto, quota di auto con finanziamento, ognuno confrontato con il mese prima allo stesso giorno.
+3. **Cosa fare questa settimana**: le tre azioni che valgono di più nel mese, calcolate da sole (vedi le regole sotto). Una riga ciascuna: cosa fare e quanto vale in euro al mese, arrotondato a due cifre significative perché è una stima. Toccando la voce si aprono il perché, cosa fare, il pulsante "Simula questa azione", la regola e l'affidabilità. Se i segnali sono più di tre, un collegamento porta a tutti i segnali e ai rischi.
+4. **Approfondisci**, chiuso finché non serve, con sei schede:
+   - *Il mese in numeri*: i quattro riquadri (auto, finanziamenti, assicurazioni, margine totale) e il confronto tra brand.
+   - *Contratti*: per giorno o dall'inizio del mese fino al giorno scelto, con tutte le voci al clic.
+   - *Finanziamenti e assicurazioni*: per tipo, e i risultati per venditore.
+   - *Usato*: in piazzale per anzianità, con valore e interessi pagati.
+   - *Simula*: cinque leve sull'ultimo mese completo (vedi sotto).
+   - *Tutti i segnali*: l'analisi di qualunque periodo (un mese, un trimestre completo, gli ultimi 30 giorni), con il confronto con il periodo precedente della stessa lunghezza, gli altri segnali, i rischi e cosa i dati non permettono di dire.
+
+   Un indirizzo che finisce con `#segnali`, `#vendite`, `#fi`, `#usato` o `#simula` apre direttamente quella scheda (`#analisi` funziona ancora e apre i segnali).
+
    Le regole (soglie di esempio, da tarare sui dati reali):
 
    | Codice | Tipo | Quando scatta |
@@ -38,12 +44,9 @@ I dati sono **fittizi ma verosimili**: 674 contratti Jeep, BYD e Volkswagen, dal
    - **Niente rumore**: una differenza diventa un segnale solo se è troppo grande per essere un caso (test statistico a una coda al 95%). L'affidabilità cresce con la nettezza della differenza e con il numero di auto.
 
    Il valore in euro al mese è una stima del massimo recuperabile, e i valori in parte si sovrappongono.
-4. **Prova a simulare**: il concessionario parte dall'ultimo mese completo (per il brand scelto) e muove cinque cursori: auto vendute al mese, sconto medio sul listino, quota di auto con finanziamento, quota con assicurazione, giorni dell'usato in piazzale. Vede subito quanto gli resterebbe in un mese (margine meno interessi sull'usato), la differenza al mese e in un anno, quanto vale ogni leva da sola, la leva che vale di più e il confronto con l'obiettivo del mese. Ci sono quattro scenari pronti (meno sconti, più finanziamenti, più assicurazioni, usato più veloce) e "Riparti da capo".
+
+**Il simulatore**: il concessionario parte dall'ultimo mese completo (per il brand scelto) e muove cinque cursori: auto vendute al mese, sconto medio sul listino, quota di auto con finanziamento, quota con assicurazione, giorni dell'usato in piazzale. Vede subito quanto gli resterebbe in un mese (margine meno interessi sull'usato), la differenza al mese e in un anno, quanto vale ogni leva da sola, la leva che vale di più e il confronto con l'obiettivo del mese. Ci sono quattro scenari pronti (meno sconti, più finanziamenti, più assicurazioni, usato più veloce) e "Riparti da capo".
    Come calcola: margine sulle auto = auto × (margine per auto prima dello sconto − sconto × listino medio); finanziamenti e assicurazioni = auto × quota × margine medio per contratto; interessi sull'usato = auto × permute per auto × giorni × interessi per usato al giorno (media su tutte le permute del brand). Ogni cursore cambia solo il suo numero: non stima, per esempio, le vendite perse con meno sconto.
-5. **Approfondisci**: le tabelle per chi vuole il dettaglio.
-   - Contratti, con tutte le voci al clic, e confronto tra brand.
-   - Finanziamenti e assicurazioni per tipo, e risultati per venditore.
-   - Usato in piazzale per anzianità, con valore e interessi pagati.
 
 ## Come aprirla
 
