@@ -349,3 +349,29 @@ button.cv-chip[aria-pressed="true"] { background: var(--color-bad); border-color
   .cv-card, .cv-more { padding-inline: 16px; }
 }
 .cv-goal-msg:empty { display: none; }
+
+/* Versione a tre sezioni (21/10/2026): i numeri chiave, cosa ha portato margine e cosa no, per approfondire.
+   Per un executive meno rumore è meglio: quattro numeri e due domande, il resto in fondo. */
+.cv-quattro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .cv-quattro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cv-dett { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.cv-quote { display: grid; gap: 14px; }
+.cv-quote .cv-qbig { font-size: clamp(1.8rem, 3vw, 2.3rem); }
+@media (max-width: 900px) { .cv-dett { grid-template-columns: minmax(0, 1fr); } .cv-quote { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .cv-quote { grid-template-columns: minmax(0, 1fr); } }
+.cv-ponte { min-width: 0; margin-top: 8px; }
+.cv-ponte svg, .cv-trendbox svg { display: block; max-width: 100%; height: auto; }
+.cv-ponte text { font-family: var(--font-sans); font-size: 13px; fill: var(--color-fg-muted); }
+.cv-ponte text.cv-ponte-tot { fill: var(--color-fg); font-weight: 700; }
+.cv-domande { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; align-items: start; }
+@media (max-width: 900px) { .cv-domande { grid-template-columns: minmax(0, 1fr); } }
+.cv-domanda { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.cv-h3 { margin: 0; font-size: 17px; font-weight: 700; }
+.cv-terza { padding-top: 8px; border-top: 1px solid var(--color-border-line); }
+.cv-trendbox { min-width: 0; }
+.cv-trendbox text { font-family: var(--font-sans); font-size: 12.5px; fill: var(--color-fg-muted); }
+.cv-trendbox text.cv-trend-val { font-weight: 600; fill: var(--color-fg); }
+.cv-trendbox text.cv-trend-scelto { fill: var(--color-fg); font-weight: 700; }
+.cv-trendbox text.cv-trend-nota { font-size: 11px; }
+.cv-pdf { margin-left: auto; }
+@media (max-width: 640px) { .cv-pdf { margin-left: 0; } }

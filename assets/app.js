@@ -75,6 +75,7 @@ dash.calc('kpi', {
             chiave: `${vista}|${d}|${brand}`, vista, periodo: d, brand, ...a,
             ref_vetture: ok ? Math.round(rif(b.vetture) * 10) / 10 : null,
             ref_margine_totale: ok ? Math.round(rif(b.margine_totale)) : null,
+            ref_fatturato_netto: ok ? Math.round(rif(b.fatturato_netto)) : null,
             ref_margine_medio: ok ? b.margine_medio : null,
             ref_pen_fin: ok ? b.pen_fin : null,
             ref_pen_ass: ok ? b.pen_ass : null,
@@ -88,50 +89,6 @@ dash.calc('kpi', {
         }
       }
     });
-    return out;
-  },
-});
-
-dash.calc('fi_mix', {
-  title: 'F&I per tipo di prodotto',
-  description: 'Contratti, importi e provvigioni di finanziamenti e assicurazioni per tipo, per giornata e mese a data.',
-  inputs: ['contratti'],
-  fn: (contratti) => {
-    const giorni = [...new Set(contratti.map((c) => c.data))].sort();
-    const n = (r, k) => Number(r[k]) || 0;
-    const somma = (rs, f) => rs.reduce((s, r) => s + f(r), 0);
-    const ambiti = [
-      { ambito: 'Finanziamento', flag: 'finanziamento', tipo: 'fin_tipo', importo: 'fin_importo', provv: 'fin_provvigione', rappel: 'fin_rappel', vend: 'fin_provvigione_venditore', tipi: ['Balloon (PCP)', 'Rateale classico', 'Leasing', 'Noleggio lungo termine'] },
-      { ambito: 'Assicurazione', flag: 'assicurazione', tipo: 'ass_tipo', importo: 'ass_importo', provv: 'ass_provvigione', rappel: 'ass_rappel', vend: 'ass_provvigione_venditore', tipi: ['Furto e incendio', 'Kasko', 'CPI credito protetto', 'GAP', 'Pacchetto F&I'] },
-    ];
-    const out = [];
-    for (const d of giorni) {
-      const viste = {
-        giorno: contratti.filter((c) => c.data === d),
-        mtd: contratti.filter((c) => c.data.slice(0, 7) === d.slice(0, 7) && c.data <= d),
-      };
-      for (const [vista, tutti] of Object.entries(viste)) {
-        for (const brand of ['Tutti', 'Jeep', 'BYD', 'Volkswagen']) {
-          const rs = tutti.filter((r) => brand === 'Tutti' || r.brand === brand);
-          for (const a of ambiti) {
-            const con = rs.filter((r) => r[a.flag] === 'Sì');
-            for (const tipo of [...a.tipi, 'Totale']) {
-              const g = tipo === 'Totale' ? con : con.filter((r) => r[a.tipo] === tipo);
-              const conTan = g.filter((r) => a.ambito === 'Finanziamento' && r.fin_tasso !== '');
-              const pesoTan = somma(conTan, (r) => n(r, 'fin_importo'));
-              out.push({
-                chiave: `${vista}|${d}|${brand}|${a.ambito}|${tipo}`, vista, periodo: d, brand, ambito: a.ambito, tipo,
-                contratti: g.length,
-                importo: somma(g, (r) => n(r, a.importo)),
-                provvigioni_rappel: somma(g, (r) => n(r, a.provv) + n(r, a.rappel)),
-                provvigioni_venditore: somma(g, (r) => n(r, a.vend)),
-                tasso_medio: pesoTan ? Math.round((somma(conTan, (r) => n(r, 'fin_tasso') * n(r, 'fin_importo')) / pesoTan) * 100) / 100 : null,
-              });
-            }
-          }
-        }
-      }
-    }
     return out;
   },
 });
@@ -162,6 +119,8 @@ dash.calc('venditori', {
             out.push({
               chiave: `${vista}|${d}|${brand}|${venditore}`, vista, periodo: d, brand, venditore,
               vetture: g.length,
+              fatturato_netto: somma(g, (r) => r.ricavo_netto),
+              sconto_medio_pct: quota(somma(g, (r) => n(r, 'sconto')), somma(g, (r) => n(r, 'prezzo_listino'))),
               margine_totale: mt,
               margine_medio: Math.round(mt / g.length),
               pen_fin: quota(somma(g, (r) => (r.finanziamento === 'Sì' ? 1 : 0)), g.length),
@@ -175,34 +134,6 @@ dash.calc('venditori', {
     return out;
   },
 });
-
-dash.calc('usato', {
-  title: 'Giacenza usato da permute',
-  description: 'Permute ancora in stock per brand e fascia di giorni in giacenza, con costo stock e interessi passivi maturati.',
-  inputs: ['contratti'],
-  fn: (contratti) => {
-    const stock = contratti.filter((c) => c.permuta_stato === 'In stock');
-    const n = (r, k) => Number(r[k]) || 0;
-    const somma = (rs, f) => rs.reduce((s, r) => s + f(r), 0);
-    const fasce = [['0–30 giorni', 0, 30], ['31–60 giorni', 31, 60], ['61–90 giorni', 61, 90], ['Oltre 90 giorni', 91, 100000], ['Totale', 0, 100000]];
-    const out = [];
-    for (const brand of ['Tutti', 'Jeep', 'BYD', 'Volkswagen']) {
-      for (const [fascia, da, a] of fasce) {
-        const g = stock.filter((r) => (brand === 'Tutti' || r.brand === brand) && n(r, 'permuta_giorni_giacenza') >= da && n(r, 'permuta_giorni_giacenza') <= a);
-        out.push({
-          chiave: `${brand}|${fascia}`, brand, fascia,
-          permute: g.length,
-          valutazione: somma(g, (r) => n(r, 'permuta_valutazione')),
-          costo_stock: somma(g, (r) => n(r, 'permuta_costo_stock')),
-          interessi_passivi: Math.round(somma(g, (r) => n(r, 'permuta_interessi_passivi')) * 100) / 100,
-          giorni_medi: g.length ? Math.round((somma(g, (r) => n(r, 'permuta_giorni_giacenza')) / g.length) * 10) / 10 : null,
-        });
-      }
-    }
-    return out;
-  },
-});
-
 
 /* ---------- Formati ---------- */
 const BRANDS = ['Jeep', 'BYD', 'Volkswagen'];
@@ -263,39 +194,6 @@ const meseAttivo = () => { const m = params().mese; const mesi = [...new Set(GIO
 const fineMeseDati = (mese) => GIORNI.filter((d) => d.startsWith(mese)).pop();
 const giornoAttivo = () => { const g = params().giorno; return GIORNI.includes(g) ? g : fineMeseDati(meseAttivo()); };
 
-/* ---------- Controlli ---------- */
-$('#sel-mese').addEventListener('change', (e) => { stato.scelto = null; an.periodo = null; dash.setParams({ mese: e.target.value, giorno: null }); });
-$('#sel-giorno').addEventListener('change', (e) => { stato.scelto = null; dash.setParams({ giorno: e.target.value }); });
-$('#btn-prev').addEventListener('click', () => { const i = GIORNI.indexOf(giornoAttivo()); if (i > 0) { stato.scelto = null; dash.setParams({ giorno: GIORNI[i - 1] }); } });
-$('#btn-next').addEventListener('click', () => { const i = GIORNI.indexOf(giornoAttivo()); if (i < GIORNI.length - 1) { stato.scelto = null; dash.setParams({ giorno: GIORNI[i + 1] }); } });
-$$('#seg-vista button').forEach((x) => x.addEventListener('click', () => { stato.scelto = null; dash.setParams({ vista: x.dataset.vista }); }));
-$$('#seg-brand button').forEach((x) => x.addEventListener('click', () => { stato.scelto = null; dash.setParams({ brand: x.dataset.brand }); }));
-$$('#seg-misura button').forEach((x) => x.addEventListener('click', () => { stato.misura = x.dataset.misura; disegna(); }));
-$('#cerca-contratti').addEventListener('input', (e) => { stato.cerca = e.target.value.trim().toLowerCase(); disegna(); });
-$('#chip-negativi').addEventListener('click', () => { stato.soloNeg = !stato.soloNeg; disegna(); });
-$$('#tab-contratti th button[data-sort]').forEach((x) => x.addEventListener('click', () => {
-  const k = x.dataset.sort;
-  stato.ordina = stato.ordina.k === k ? { k, dir: -stato.ordina.dir } : { k, dir: 1 };
-  disegna();
-}));
-$('#tab-brand').addEventListener('click', (e) => {
-  const tr = e.target.closest('tr[data-brand]');
-  if (tr) { stato.scelto = null; dash.setParams({ brand: params().brand === tr.dataset.brand ? 'Tutti' : tr.dataset.brand }); }
-});
-const scegliContratto = (id) => { stato.scelto = stato.scelto === id ? null : id; disegna(); if (stato.scelto) $('#dettaglio').scrollIntoView({ block: 'nearest', behavior: RIDOTTO ? 'auto' : 'smooth' }); };
-$('#tab-contratti').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-key]'); if (tr) scegliContratto(tr.dataset.key); });
-$('#tab-contratti').addEventListener('keydown', (e) => { const tr = e.target.closest('tr[data-key]'); if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); scegliContratto(tr.dataset.key); } });
-
-const mostraTab = (tab, link = true) => {
-  stato.tab = tab;
-  $$('.cv-tabs button').forEach((x) => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
-  $$('.cv-page').forEach((p) => { p.hidden = p.id !== `pagina-${tab}`; });
-  if (link) dash.setLink(tab);
-  disegna();
-};
-$$('.cv-tabs button').forEach((x) => x.addEventListener('click', () => mostraTab(x.dataset.tab)));
-const vai = (tab, sel) => { mostraTab(tab); const n = $(sel); if (n) n.scrollIntoView({ block: 'start', behavior: RIDOTTO ? 'auto' : 'smooth' }); };
-
 /* ---------- Tooltip ---------- */
 const tooltip = (box) => { let t = box.querySelector('.cv-tip'); if (!t) { t = el('div', 'cv-tip'); t.hidden = true; box.append(t); } return t; };
 const mostraTip = (box, tip, x, y) => {
@@ -319,197 +217,6 @@ const freccia = (v, rif) => {
 };
 const righe = (dl, voci) => dl.replaceChildren(...voci.flatMap(([t, v, cls]) => [el('dt', cls || '', t), el('dd', cls || '', v)]));
 const rif = (box, parti) => box.replaceChildren(...parti.filter(Boolean).map((x) => (typeof x === 'string' ? txt(x) : x)));
-
-function riepilogo(k, p, giorno) {
-  const h = $('#headline'), sub = $('#subline');
-  const chi = p.brand === 'Tutti' ? '' : ` ${p.brand}`;
-  const quando = p.vista === 'giorno' ? maiusc(fGiorno.format(aData(giorno))) : `${maiusc(fMese.format(aData(giorno)))} fino al ${Number(giorno.slice(8))}`;
-  const etichetta = p.vista === 'giorno' ? 'di solito' : `a ${mesePrima(giorno)}`;
-  const vuotoK = !k || !k.vetture;
-
-  // Frase d'apertura con le quantità colorate come i riquadri (solo se la pagina la prevede)
-  if (!h) { /* nella versione executive la frase è sostituita dal margine contro l'obiettivo */ }
-  else if (vuotoK) {
-    h.textContent = `${quando}: nessuna auto${chi} venduta.`;
-    sub.replaceChildren();
-  } else {
-    const parola = (s, c) => el('span', `cv-k cv-k-${c}`, s);
-    h.replaceChildren(
-      txt(`${quando}: `),
-      parola(`${num(k.vetture)} ${k.vetture === 1 ? `auto${chi} venduta` : `auto${chi} vendute`}`, 'auto'), txt(', '),
-      parola(`${num(k.fin_n)} ${k.fin_n === 1 ? 'finanziamento' : 'finanziamenti'}`, 'fin'), txt(' e '),
-      parola(`${num(k.ass_n)} ${k.ass_n === 1 ? 'assicurazione' : 'assicurazioni'}`, 'ass'),
-      txt('. Margine totale: '), parola(eur(k.margine_totale), 'tot'), txt('.'));
-    const d = k.d_margine_totale_pct;
-    const rispetto = p.vista === 'giorno' ? 'rispetto alla media delle ultime 4 settimane' : `rispetto a ${mesePrima(giorno)} allo stesso giorno`;
-    const cosa = p.vista === 'giorno' ? 'Una giornata' : 'Un mese';
-    if (vuoto(d)) sub.replaceChildren();
-    else if (d > 0.05) sub.replaceChildren(txt(`${cosa} migliore del solito: margine `), b(segno(d, fPct.format), 'cv-up'), txt(` ${rispetto}.`));
-    else if (d < -0.05) sub.replaceChildren(txt(`${cosa} sotto la media: margine `), b(segno(d, fPct.format), 'cv-down'), txt(` ${rispetto}.`));
-    else sub.replaceChildren(txt(`${cosa} in linea con il solito, ${rispetto}.`));
-  }
-
-  const trattino = '—';
-  const perUno = (tot, n) => (n ? eur(tot / n) : trattino);
-
-  // Auto vendute
-  rif($('#q-auto-ref'), vuotoK ? [] : [freccia(k.vetture, k.ref_vetture), vuoto(k.ref_vetture) ? '' : `${etichetta} ${num(k.ref_vetture)}`]);
-  righe($('#q-auto-rows'), vuotoK ? [] : [
-    ['Incassato', eur(k.fatturato_netto)],
-    ['Sconto medio', vuoto(k.sconto_medio_pct) ? trattino : fPct1.format(k.sconto_medio_pct)],
-    ['Margine', eur(k.margine_veicolo), k.margine_veicolo < 0 ? 'cv-tot cv-neg' : 'cv-tot'],
-  ]);
-
-  // Finanziamenti
-  $('#q-fin-unit').textContent = vuotoK ? '' : `su ${num(k.vetture)} auto`;
-  rif($('#q-fin-ref'), vuotoK ? [] : [freccia(k.pen_fin, k.ref_pen_fin), `${pct(k.pen_fin)} delle auto`, vuoto(k.ref_pen_fin) ? '' : ` · ${etichetta} ${pct(k.ref_pen_fin)}`]);
-  righe($('#q-fin-rows'), vuotoK ? [] : [
-    ['Importo finanziato', eur(k.fin_importo)],
-    ['Per finanziamento', perUno(k.margine_fin, k.fin_n)],
-    ['Margine', eur(k.margine_fin), 'cv-tot'],
-  ]);
-
-  // Assicurazioni
-  $('#q-ass-unit').textContent = vuotoK ? '' : `su ${num(k.vetture)} auto`;
-  rif($('#q-ass-ref'), vuotoK ? [] : [freccia(k.pen_ass, k.ref_pen_ass), `${pct(k.pen_ass)} delle auto`, vuoto(k.ref_pen_ass) ? '' : ` · ${etichetta} ${pct(k.ref_pen_ass)}`]);
-  righe($('#q-ass-rows'), vuotoK ? [] : [
-    ['Premi', eur(k.ass_importo)],
-    ['Per polizza', perUno(k.margine_ass, k.ass_n)],
-    ['Margine', eur(k.margine_ass), 'cv-tot'],
-  ]);
-
-  // Margine totale: la somma delle tre parti
-  rif($('#q-tot-ref'), vuotoK ? [] : [freccia(k.margine_totale, k.ref_margine_totale), vuoto(k.ref_margine_totale) ? '' : `${etichetta} ${eur(k.ref_margine_totale)}`]);
-  const parti = [['margine_veicolo', 'var(--mix-auto)'], ['margine_fin', 'var(--mix-fin)'], ['margine_ass', 'var(--mix-ass)']];
-  $('#q-tot-bar').replaceChildren(...(vuotoK ? [] : parti.filter(([c]) => k[c] > 0).map(([c, col]) => { const s = el('span'); s.style.flex = `${k[c]} 1 0`; s.style.background = col; return s; })));
-  righe($('#q-tot-rows'), vuotoK ? [] : [
-    ['Dalle auto', eur(k.margine_veicolo), k.margine_veicolo < 0 ? 'cv-neg' : ''],
-    ['Dai finanziamenti', eur(k.margine_fin)],
-    ['Dalle assicurazioni', eur(k.margine_ass)],
-    ['Per auto venduta', eur(k.margine_medio), 'cv-tot'],
-  ]);
-}
-
-/* ---------- 2. Tre numeri del mese ---------- */
-function tre(k, fine) {
-  const prima = mesePrima(fine);
-  const voci = [['#t-auto', 'vetture', num], ['#t-medio', 'margine_medio', eur], ['#t-fin', 'pen_fin', pct]];
-  const rifDi = { vetture: 'ref_vetture', margine_medio: 'ref_margine_medio', pen_fin: 'ref_pen_fin' };
-  voci.forEach(([sel, campo, f]) => {
-    const vuotoK = !k || !k.vetture;
-    $(sel).textContent = vuotoK ? '—' : f(k[campo]);
-    const r = vuotoK ? null : k[rifDi[campo]];
-    // Mese abbreviato: su telefono il riferimento deve stare in una riga
-    $(`${sel}-ref`).replaceChildren(...(vuoto(r) ? [] : [freccia(k[campo], r), txt(` ${prima.slice(0, 3)}: ${f(r)}`)].filter(Boolean)));
-    $(`${sel}-ref`).title = vuoto(r) ? '' : `${maiusc(prima)} allo stesso giorno: ${f(r)}`;
-  });
-}
-
-/* ---------- Obiettivo del mese ---------- */
-// Giorni di apertura: dal lunedì al sabato.
-const aperto = (d) => d.getUTCDay() !== 0;
-const giorniApertura = (giorno) => {
-  const [y, m, g] = giorno.split('-').map(Number);
-  const ultimo = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  let fatti = 0, totali = 0;
-  for (let i = 1; i <= ultimo; i++) {
-    if (!aperto(new Date(Date.UTC(y, m - 1, i, 12)))) continue;
-    totali++;
-    if (i <= g) fatti++;
-  }
-  return { fatti, totali, restanti: totali - fatti };
-};
-const chiaveObiettivo = (giorno, brand, misura) => `cruscotto-obiettivo|${giorno.slice(0, 7)}|${brand}|${misura}`;
-const leggiObiettivo = (k) => { try { const v = Number(localStorage.getItem(k)); return v > 0 ? v : null; } catch (e) { return null; } };
-const scriviObiettivo = (k, v) => { try { if (v) localStorage.setItem(k, String(v)); else localStorage.removeItem(k); } catch (e) { /* archivio non disponibile */ } };
-
-// Obiettivo del mese del giorno scelto: quello impostato dal concessionario, altrimenti il mese prima più il 5%.
-function metaDelMese(mappaKpi, giorno, brand, misura) {
-  // Nessun obiettivo suggerito: la stagionalità cambia da concessionaria a concessionaria, l'obiettivo lo mette il titolare.
-  const fatto = Number(mappaKpi.get(`mtd|${giorno}|${brand}`)?.[misura]) || 0;
-  const chiave = chiaveObiettivo(giorno, brand, misura);
-  const scelto = leggiObiettivo(chiave);
-  return { fatto, chiave, scelto, meta: scelto };
-}
-
-function obiettivo(mappaKpi, giorno, brand, misura) {
-  const auto = misura === 'vetture';
-  const f = auto ? (v) => `${num(Math.round(v))} auto` : eur;
-  const mese = fMese.format(aData(giorno));
-  const { fatto, chiave, scelto, meta } = metaDelMese(mappaKpi, giorno, brand, misura);
-
-  $('#titolo-obiettivo').textContent = `Margine di ${mese}${brand === 'Tutti' ? '' : ` · ${brand}`}`;
-  $('#goal-input-label').textContent = `Obiettivo di ${mese} (${auto ? 'auto vendute' : 'margine in euro'})`;
-  $('#goal-nota').textContent = '';
-  $('#goal-modifica').textContent = scelto ? 'Cambia obiettivo' : `Imposta l'obiettivo di ${mese}`;
-  $('#goal-reset').hidden = !scelto;
-  $('#goal-barra').hidden = !meta;
-  const form = $('#goal-form');
-  form.dataset.chiave = chiave;
-  if (form.hidden) $('#goal-input').value = meta || '';
-
-  if (!meta) {
-    $('#goal-fatto').textContent = f(fatto);
-    $('#goal-su').textContent = '';
-    $('#goal-fill').style.width = '0%';
-    $('#goal-mark').hidden = true;
-    $('#goal-msg').replaceChildren();
-    $('#goal-msg').className = 'cv-goal-msg';
-    return;
-  }
-
-  const g = giorniApertura(giorno);
-  const atteso = g.totali ? g.fatti / g.totali : 0;
-  const quota = fatto / meta;
-  const mancano = Math.max(0, meta - fatto);
-
-  $('#goal-fatto').textContent = f(fatto);
-  $('#goal-su').textContent = `su ${f(meta)} · ${pct(quota)}`;
-  const fill = $('#goal-fill');
-  const larg = `${Math.min(100, quota * 100).toFixed(1)}%`;
-  if (!fill.style.width && !RIDOTTO) requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = larg; }));
-  else fill.style.width = larg;
-  const mark = $('#goal-mark');
-  mark.hidden = false;
-  mark.style.left = `${Math.min(100, atteso * 100).toFixed(1)}%`;
-  mark.classList.toggle('cv-goal-mark-fine', atteso > 0.75);
-  mark.classList.toggle('cv-goal-mark-inizio', atteso < 0.25);
-
-  // Una frase: dove sei e quanto serve al giorno da qui a fine mese. Il segno sulla barra dice dove dovresti essere.
-  const msg = $('#goal-msg');
-  const alGiorno = g.restanti ? mancano / g.restanti : null;
-  const serve = auto ? (v) => `${fNum.format(Math.round(v * 10) / 10)} auto` : eur;
-  const passo = quota >= 1 || !g.restanti ? [] : [txt(` Servono ${serve(alGiorno)} al giorno per ${num(g.restanti)} giorni.`)];
-  if (quota >= 1) { msg.className = 'cv-goal-msg cv-goal-ok'; msg.replaceChildren(b('Obiettivo raggiunto.')); }
-  else if (!g.restanti) { msg.className = 'cv-goal-msg cv-goal-warn'; msg.replaceChildren(b('Mese chiuso sotto obiettivo'), txt(` di ${f(mancano)}.`)); }
-  else if (quota >= atteso + 0.03) { msg.className = 'cv-goal-msg cv-goal-ok'; msg.replaceChildren(b('Sei avanti.'), ...passo); }
-  else if (quota >= atteso - 0.03) { msg.className = 'cv-goal-msg'; msg.replaceChildren(b('Sei in linea.'), ...passo); }
-  else { msg.className = 'cv-goal-msg cv-goal-warn'; msg.replaceChildren(b('Sei indietro.'), ...passo); }
-}
-
-// Cambia obiettivo
-$('#goal-modifica').addEventListener('click', () => {
-  const form = $('#goal-form');
-  form.hidden = !form.hidden;
-  $('#goal-modifica').setAttribute('aria-expanded', String(!form.hidden));
-  if (!form.hidden) $('#goal-input').focus();
-});
-$('#goal-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const v = Math.round(Number($('#goal-input').value));
-  if (!(v > 0)) { $('#goal-input').setCustomValidity('Scrivi un numero maggiore di zero'); $('#goal-input').reportValidity(); return; }
-  scriviObiettivo(e.target.dataset.chiave, v);
-  e.target.hidden = true;
-  $('#goal-modifica').setAttribute('aria-expanded', 'false');
-  disegna();
-});
-$('#goal-input').addEventListener('input', (e) => e.target.setCustomValidity(''));
-$('#goal-reset').addEventListener('click', () => {
-  scriviObiettivo($('#goal-form').dataset.chiave, null);
-  $('#goal-form').hidden = true;
-  $('#goal-modifica').setAttribute('aria-expanded', 'false');
-  disegna();
-});
 
 /* ---------- Simulatore: cosa cambia in un mese se muovo una leva ---------- */
 // Base: l'ultimo mese completo nei dati, per il brand scelto. Gli altri numeri restano fermi.
@@ -614,9 +321,6 @@ function simulatore(contratti, marg, mappaKpi, giorno, brand) {
   sez.hidden = !B;
   if (!B) return;
   if (!$('#sim-leve').children.length) costruisciLeve();
-  // Collegamento con l'obiettivo del mese scelto
-  sim.meta = metaDelMese(mappaKpi, giorno, brand, 'margine_totale').meta;
-  sim.meseMeta = fMese.format(aData(giorno));
   const nuovaBase = !sim.base || sim.base.chiave !== B.chiave;
   sim.base = B;
   if (nuovaBase) sim.v = { ...B.v };
@@ -724,7 +428,6 @@ function analizzaPeriodo(righe, per, brand) {
   const cur = righe.filter((r) => delBrand(r) && r.data >= per.da && r.data <= per.a);
   const ref = per.ref ? righe.filter((r) => delBrand(r) && r.data >= per.ref.da && r.data <= per.ref.a) : [];
   const alMese = 30.4 / giorniTra(per.da, per.a);
-  const fid = (x) => (x >= 30 ? 'alta' : x >= 10 ? 'media' : 'bassa');
   // Niente rumore: una differenza diventa un segnale solo se è troppo grande per essere un caso (test a una coda al 95%).
   // L'affidabilità dipende da quanto la differenza è netta e da quante auto la sostengono.
   const Z_MIN = 1.64;
@@ -739,7 +442,6 @@ function analizzaPeriodo(righe, per, brand) {
   };
   const affid = (z, x) => (z >= 2.33 && x >= 20 ? 'alta' : z >= 1.96 ? 'media' : 'bassa');
   const quotaSconto = (r) => n(r, 'sconto') / (n(r, 'prezzo_listino') || 1);
-  const quotaMargine = (r) => r.margine_veicolo / (n(r, 'prezzo_listino') || 1);
   const pp = (x) => fPct1.format(x);
   const conti = (xs) => {
     const L = somma(xs, (r) => n(r, 'prezzo_listino')), S = somma(xs, (r) => n(r, 'sconto'));
@@ -794,43 +496,6 @@ function analizzaPeriodo(righe, per, brand) {
     });
   });
 
-  // Peggioramenti rispetto al periodo precedente, marchio per marchio (almeno 10 auto in entrambi i periodi)
-  if (per.ref) marchi.forEach((br) => {
-    const qui = cur.filter((r) => r.brand === br), prima = ref.filter((r) => r.brand === br);
-    if (qui.length < 10 || prima.length < 10) return;
-    const Q = conti(qui), P = conti(prima);
-    const zSc = zMedie(qui, prima, quotaSconto);
-    const zFin = zQuote(P.pf * P.N, P.N, Q.pf * Q.N, Q.N), zAss = zQuote(P.pa * P.N, P.N, Q.pa * Q.N, Q.N);
-    const zResa = zMedie(prima.filter((r) => r.finanziamento === 'Sì'), qui.filter((r) => r.finanziamento === 'Sì'), (r) => r.margine_fin);
-    if (Q.sc - P.sc >= 0.005 && zSc >= Z_MIN) segnali.push({
-      codice: 'SCO-02', marchio: brand === 'Tutti' ? br : '', tipo: 'Peggioramento', titolo: `Lo sconto medio è salito${su(br)}`,
-      valore: (Q.sc - P.sc) * Q.L * alMese, fid: affid(zSc, Q.N),
-      perche: [txt('Dal '), b(pp(P.sc)), txt(' al '), b(pp(Q.sc)), txt(` del listino ${per.ref.rispetto}, su ${num(Q.N)} auto ${br}.`)],
-      azione: 'Guarda se è salito su pochi modelli o su tutti: nel primo caso è un problema di stock da smaltire, nel secondo di trattativa.',
-      leva: { k: 'sconto', d: -(Q.sc - P.sc) * (Q.L / C.L) },
-    });
-    if (P.pf - Q.pf >= 0.04 && zFin >= Z_MIN && Q.mf > 0) segnali.push({
-      codice: 'FIN-01', marchio: brand === 'Tutti' ? br : '', tipo: 'Peggioramento', titolo: `Meno auto vendute con un finanziamento${su(br)}`,
-      valore: Q.N * (P.pf - Q.pf) * Q.mf * alMese, fid: affid(zFin, Q.N),
-      perche: [txt('Dal '), b(pct(P.pf)), txt(' al '), b(pct(Q.pf)), txt(` delle auto ${br} ${per.ref.rispetto}. Ogni finanziamento vale in media ${eur(Q.mf)} di margine.`)],
-      azione: 'Verifica se sono cambiate le condizioni della finanziaria del marchio (tassi, campagne) o il modo in cui il team propone il finanziamento.',
-      leva: { k: 'pf', d: (P.pf - Q.pf) * (Q.N / C.N) },
-    });
-    if (P.pa - Q.pa >= 0.04 && zAss >= Z_MIN && Q.ma > 0) segnali.push({
-      codice: 'ASS-01', marchio: brand === 'Tutti' ? br : '', tipo: 'Peggioramento', titolo: `Meno auto vendute con una polizza${su(br)}`,
-      valore: Q.N * (P.pa - Q.pa) * Q.ma * alMese, fid: affid(zAss, Q.N),
-      perche: [txt('Dal '), b(pct(P.pa)), txt(' al '), b(pct(Q.pa)), txt(` delle auto ${br} ${per.ref.rispetto}. Ogni polizza vale in media ${eur(Q.ma)} di margine.`)],
-      azione: 'Spesso le polizze calano insieme ai finanziamenti: controlla prima quelli.',
-      leva: { k: 'pa', d: (P.pa - Q.pa) * (Q.N / C.N) },
-    });
-    if (Q.nf >= 10 && P.nf >= 10 && P.mf - Q.mf >= P.mf * 0.1 && zResa >= Z_MIN) segnali.push({
-      codice: 'FIN-03', marchio: brand === 'Tutti' ? br : '', tipo: 'Peggioramento', titolo: `Ogni finanziamento rende meno${su(br)}`,
-      valore: (P.mf - Q.mf) * Q.nf * alMese, fid: affid(zResa, Q.nf),
-      perche: [txt('In media '), b(eur(Q.mf)), txt(` di margine per finanziamento, contro ${eur(P.mf)} nel periodo di confronto (${per.ref.nome}).`)],
-      azione: 'Confronta provvigioni e premi delle finanziarie con cui lavori: conviene spostare i volumi su quella che rende di più a parità di tasso per il cliente.',
-    });
-  });
-
   // Regole violate: auto vendute sotto costo
   const sotto = cur.filter((r) => r.margine_veicolo < 0);
   if (sotto.length) {
@@ -843,72 +508,13 @@ function analizzaPeriodo(righe, per, brand) {
     });
   }
 
-  // Combinazione che costa: sconto tra i più alti e nessun finanziamento a recuperarlo
-  if (cur.length >= 12) {
-    const quote = cur.map((r) => n(r, 'sconto') / (n(r, 'prezzo_listino') || 1)).sort((a, c) => a - c);
-    const q75 = d3.quantile(quote, 0.75), med = d3.quantile(quote, 0.5);
-    const combo = cur.filter((r) => n(r, 'sconto') / (n(r, 'prezzo_listino') || 1) > q75 && r.finanziamento !== 'Sì');
-    if (combo.length >= 3) {
-      const extra = somma(combo, (r) => n(r, 'sconto') - n(r, 'prezzo_listino') * med);
-      segnali.push({
-        codice: 'COM-01', tipo: 'Combinazione che costa', titolo: 'Sconti alti senza finanziamento',
-        valore: extra * alMese, fid: fid(combo.length),
-        perche: [b(`${num(combo.length)} auto`), txt(` hanno avuto uno sconto tra i più alti (oltre il ${pp(q75)} del listino) senza un finanziamento che lo recuperasse. Lo sconto in più rispetto alla media vale ${eur(extra)}.`)],
-        azione: 'Lega lo sconto extra al finanziamento: sopra una soglia, lo sconto si concede solo con una pratica.',
-        leva: { k: 'pf', d: combo.length / C.N },
-      });
-    }
-  }
-
-  // Fuori dalla norma: un modello che rende molto meno del resto del suo marchio.
-  // Il confronto è in percentuale del listino: in euro un'auto più economica rende sempre meno, anche quando va bene.
-  [...new Set(cur.map((r) => `${r.brand}|${r.modello}`))].forEach((chiave) => {
-    const [br, mod] = chiave.split('|');
-    const qui = cur.filter((r) => r.brand === br && r.modello === mod), resto = cur.filter((r) => r.brand === br && r.modello !== mod);
-    if (qui.length < 6 || resto.length < 8) return;
-    const sulListino = (xs) => somma(xs, (r) => r.margine_veicolo) / (somma(xs, (r) => n(r, 'prezzo_listino')) || 1);
-    const qQui = sulListino(qui), qResto = sulListino(resto);
-    const zMod = zMedie(resto, qui, quotaMargine);
-    if (qResto > 0 && qQui < qResto * 0.5 && zMod >= Z_MIN) segnali.push({
-      codice: 'MOD-01', chi: mod, tipo: 'Fuori dalla norma', titolo: `${mod}: margine molto sotto il resto di ${br}`,
-      valore: (qResto - qQui) * somma(qui, (r) => n(r, 'prezzo_listino')) * alMese, fid: affid(zMod, qui.length),
-      perche: [txt('Sulla vendita resta il '), b(pp(qQui)), txt(` del listino, contro il ${pp(qResto)} degli altri modelli ${br}, su ${num(qui.length)} auto.`)],
-      azione: "Controlla prezzo d'acquisto, campagne del brand e sconti su questo modello. Se il margine non torna, spingi i modelli che rendono di più.",
-    });
-  });
-
-  // Accumulo: usato fermo da più di 2 mesi (situazione ad oggi, non dipende dal periodo)
-  const fermi = righe.filter((r) => delBrand(r) && r.permuta_stato === 'In stock' && n(r, 'permuta_giorni_giacenza') > 60);
-  if (fermi.length) {
-    const alGiorno = somma(fermi, (r) => n(r, 'permuta_interessi_passivi') / (n(r, 'permuta_giorni_giacenza') || 1));
-    segnali.push({
-      codice: 'USA-01', tipo: 'Accumulo', titolo: `${num(fermi.length)} ${fermi.length === 1 ? 'usato fermo' : 'usati fermi'} da più di 2 mesi`,
-      valore: alGiorno * 30.4, fid: fid(fermi.length),
-      perche: [txt('Ogni mese costano circa '), b(eur(alGiorno * 30.4)), txt(' di interessi, e intanto perdono valore. Situazione ad oggi, qualunque sia il periodo scelto.')],
-      azione: 'Dai a ciascuno una data limite: se a 90 giorni non è venduto, va a un commerciante anche a un prezzo più basso.',
-      leva: { k: 'g', d: -15 },
-    });
-  }
-
-  // Rischi: non tolgono margine oggi, ma lo rendono fragile
-  if (C.brandPaga > 0 && C.brandPaga >= C.mv) rischi.push({ codice: 'CON-01', testo: [txt('Senza contributi e bonus del brand, la vendita delle auto sarebbe in perdita: valgono '), b(eur(C.brandPaga)), txt(`, più di tutto il margine sulle auto (${eur(C.mv)}). Se la casa riduce le campagne, il margine sparisce.`)] });
-  else if (C.mv > 0 && C.brandPaga / C.mv > 0.6) rischi.push({ codice: 'CON-01', testo: [txt('Il '), b(pct(C.brandPaga / C.mv)), txt(' del margine sulle auto viene da contributi e bonus del brand: se la casa riduce le campagne, il margine si assottiglia subito.')] });
-  if (brand === 'Tutti' && C.mt > 0) BRANDS.forEach((br) => {
-    const q = somma(cur.filter((r) => r.brand === br), (r) => r.margine_totale) / C.mt;
-    if (q > 0.55) rischi.push({ codice: 'CON-02', testo: [txt('Il '), b(pct(q)), txt(` del margine viene da ${br}: un cambio di condizioni di un solo marchio pesa su tutto.`)] });
-  });
-  if (C.mt > 0) [...new Set(cur.map((r) => r.venditore))].forEach((v) => {
-    const q = somma(cur.filter((r) => r.venditore === v), (r) => r.margine_totale) / C.mt;
-    if (q > 0.4) rischi.push({ codice: 'CON-03', testo: [txt('Il '), b(pct(q)), txt(` del margine passa da ${v}: se manca, manca una parte importante del mese.`)] });
-  });
-
   const limiti = [
     'Non ho i dati delle auto nuove in piazzale: il loro costo di giacenza non è incluso.',
     'Non conosco i costi fissi (personale, affitto, energia): parlo di margine, non di utile.',
     'I valori sono stime al mese e in parte si sovrappongono: non vanno sommati come se fossero indipendenti.',
     'Segnalo solo le differenze troppo grandi per essere un caso: con poche auto, una differenza reale può non comparire.',
   ];
-  if (!R) limiti.unshift('Non ci sono dati sul periodo precedente: ho confrontato solo venditori e modelli tra loro.');
+  if (!R) limiti.unshift('Non ci sono dati sul periodo precedente: il margine per auto non ha un confronto.');
   if (giorniTra(per.da, per.a) < 25) limiti.unshift('Il periodo è breve: le stime al mese sono meno affidabili.');
 
   segnali.sort((a, c) => c.valore - a.valore);
@@ -921,14 +527,7 @@ function apriNelSimulatore(leva) {
   const x = B.v[leva.k] + leva.d;
   sim.v = { ...B.v, [leva.k]: leva.k === 'g' ? Math.max(5, x) : Math.min(1, Math.max(0, x)) };
   mostraSimulazione(true);
-  apriDettaglio('simula');
-}
-
-// Apre "Approfondisci" sulla scheda richiesta e ci porta lo sguardo.
-function apriDettaglio(tab) {
-  $('#approfondisci').open = true;
-  mostraTab(tab);
-  $('#approfondisci').scrollIntoView({ block: 'start', behavior: RIDOTTO ? 'auto' : 'smooth' });
+  $('#sez-simula').scrollIntoView({ block: 'start', behavior: RIDOTTO ? 'auto' : 'smooth' });
 }
 
 // Titoli brevi da titolare: cosa fare, non cosa è successo. Il dettaglio resta nel "perché".
@@ -936,178 +535,11 @@ const AZIONE_BREVE = {
   'SCO-01': (s) => `Riporta gli sconti di ${s.chi} nella media`,
   'FIN-02': (s) => `Fai proporre più finanziamenti a ${s.chi}`,
   'ASS-02': (s) => `Fai proporre più polizze a ${s.chi}`,
-  'SCO-02': (s) => `Riporta giù lo sconto medio${s.marchio ? ` ${s.marchio}` : ''}`,
-  'FIN-01': (s) => `Rilancia i finanziamenti${s.marchio ? ` ${s.marchio}` : ''}`,
-  'ASS-01': (s) => `Rilancia le polizze${s.marchio ? ` ${s.marchio}` : ''}`,
-  'FIN-03': (s) => `Rinegozia le provvigioni delle finanziarie${s.marchio ? ` ${s.marchio}` : ''}`,
   'VEN-01': () => 'Ferma le vendite sotto costo',
-  'COM-01': () => 'Concedi gli sconti alti solo con un finanziamento',
-  'MOD-01': (s) => `Rivedi prezzo e campagne di ${s.chi}`,
-  'USA-01': () => 'Vendi gli usati fermi da più di 2 mesi',
 };
 
 // In alto: le tre azioni che valgono di più nel mese scelto, una riga ciascuna. Il resto si apre con un tocco.
-function azioni(contratti, marg, brand, mese) {
-  const per = periodiDisponibili().find((x) => x.id === `m|${mese}`);
-  const lista = $('#azioni');
-  if (!per) { lista.replaceChildren(); return; }
-  const righeTutte = contratti.map((r) => ({ ...r, ...(marg.get(r.contratto) || {}) }));
-  const { C, segnali } = analizzaPeriodo(righeTutte, per, brand);
-  $('#azioni-nota').textContent = C.N ? 'Quanto puoi recuperare al mese, stimato. Tocca una voce per il perché.' : '';
-  if (!segnali.length) {
-    lista.replaceChildren(el('li', 'cv-an-vuoto', C.N ? 'Niente di urgente: nessuno schema che toglie margine supera le soglie.' : 'Nessuna auto venduta nel mese.'));
-  } else {
-    lista.replaceChildren(...segnali.slice(0, 3).map((s, i) => {
-      const li = el('li');
-      const box = el('details', 'cv-az');
-      const sum = el('summary');
-      const titolo = (AZIONE_BREVE[s.codice] || (() => s.titolo))(s);
-      sum.append(el('span', 'cv-an-rank', String(i + 1)), el('span', 'cv-az-titolo', titolo), el('span', 'cv-az-valore', piuEuro(s.valore)));
-      const corpo = el('div', 'cv-az-corpo');
-      const perche = el('p'); perche.append(b(`${s.titolo}. `), ...s.perche);
-      const fare = el('p'); fare.append(b('Cosa fare: '), txt(s.azione));
-      corpo.append(perche, fare);
-      if (s.leva && sim.base) { const bt = el('button', 'cv-todo-btn', 'Simula questa azione'); bt.type = 'button'; bt.addEventListener('click', () => apriNelSimulatore(s.leva)); corpo.append(bt); }
-      corpo.append(el('p', 'cv-az-fonte', `Regola ${s.codice} · affidabilità ${s.fid}`));
-      box.append(sum, corpo);
-      li.append(box);
-      return li;
-    }));
-  }
-  const tutti = $('#azioni-tutti');
-  tutti.hidden = segnali.length <= 3;
-  tutti.textContent = `Tutti i segnali (${num(segnali.length)})`;
-  tutti.onclick = () => { an.periodo = per.id; apriDettaglio('segnali'); };
-}
-
-function analisi(contratti, marg, brand) {
-  const periodi = periodiDisponibili();
-  const sel = $('#an-periodo');
-  if (sel.options.length !== periodi.length) sel.replaceChildren(...periodi.map((x) => new Option(x.nome, x.id)));
-  if (!periodi.some((x) => x.id === an.periodo)) an.periodo = `m|${meseAttivo()}`;
-  sel.value = an.periodo;
-  const per = periodi.find((x) => x.id === an.periodo);
-  $('#an-confronto').textContent = per.ref ? `Confronto con ${per.ref.nome}.` : 'Nessun periodo precedente nei dati da confrontare.';
-
-  const righeTutte = contratti.map((r) => ({ ...r, ...(marg.get(r.contratto) || {}) }));
-  const { C, R, segnali, rischi, limiti } = analizzaPeriodo(righeTutte, per, brand);
-  const chi = brand === 'Tutti' ? '' : ` · ${brand}`;
-  const sint = $('#an-sintesi');
-  if (!C.N) {
-    sint.replaceChildren(txt(`${per.nome}${chi}: nessuna auto venduta.`));
-  } else {
-    const top = segnali.slice(0, 3);
-    sint.replaceChildren(
-      b(`${per.nome}${chi}: `), txt(`${num(C.N)} auto vendute, ${eur(C.mt)} di margine, `), b(`${eur(C.mt / C.N)} per auto`),
-      txt(R ? ` (${per.ref.nome}: ${eur(R.mt / R.N)}). ` : '. '),
-      ...(segnali.length
-        ? [txt(`Ho trovato ${num(segnali.length)} ${segnali.length === 1 ? 'segnale' : 'segnali'} che tolgono margine: ${top.length === 1 ? 'il più importante vale' : `i ${top.length} più importanti valgono`} fino a `), b(`${fEur.format(stima(d3.sum(top, (s) => s.valore)))} al mese`), txt('.')]
-        : [txt('Nessuno schema supera le soglie: prova un periodo più lungo o un altro marchio.')]));
-  }
-
-  // Le tre proposte che valgono di più
-  $('#an-proposte').replaceChildren(...(segnali.length ? segnali.slice(0, 3).map((s, i) => {
-    const card = el('article', 'cv-qcard cv-an-card');
-    const testa = el('div', 'cv-an-testa');
-    testa.append(el('span', 'cv-an-rank', String(i + 1)), el('span', 'cv-qlabel', s.tipo));
-    const valore = el('div', 'cv-an-valore', piuEuro(s.valore));
-    valore.append(el('small', '', ' al mese'));
-    const perche = el('p'); perche.append(...s.perche);
-    const azione = el('p'); azione.append(b('Cosa fare: '), txt(s.azione));
-    card.append(testa, el('h3', 'cv-an-titolo', s.titolo), valore, perche, azione);
-    if (s.leva && sim.base) {
-      const bt = el('button', 'cv-todo-btn cv-an-sim', 'Apri nel simulatore'); bt.type = 'button';
-      bt.addEventListener('click', () => apriNelSimulatore(s.leva));
-      card.append(bt);
-    }
-    const piede = el('div', 'cv-an-piede');
-    piede.append(el('span', '', `Regola ${s.codice}`), el('span', `cv-chip cv-fid-${s.fid}`, `Affidabilità ${s.fid}`));
-    card.append(piede);
-    return card;
-  }) : [el('p', 'cv-an-vuoto', 'Nessuna proposta per questo periodo.')]));
-
-  // Gli altri segnali e i rischi
-  const altri = segnali.slice(3);
-  $('#an-altri').hidden = !altri.length;
-  $('#an-altri-titolo').textContent = `Altri segnali (${num(altri.length)})`;
-  $('#an-altri-lista').replaceChildren(...altri.map((s) => {
-    const li = el('li'); const sx = el('div');
-    sx.append(txt(s.titolo), el('span', 'cv-sub', `${s.tipo} · regola ${s.codice} · affidabilità ${s.fid}`));
-    li.append(sx, b(`${piuEuro(s.valore)} al mese`));
-    return li;
-  }));
-  $('#an-rischi').hidden = !rischi.length;
-  $('#an-rischi-titolo').textContent = `Rischi da tenere d'occhio (${num(rischi.length)})`;
-  $('#an-rischi-lista').replaceChildren(...rischi.map((r) => {
-    const li = el('li'); const sx = el('div');
-    sx.append(...r.testo, el('span', 'cv-sub', `Regola ${r.codice}`));
-    li.append(sx);
-    return li;
-  }));
-  $('#an-limiti').replaceChildren(...limiti.map((t) => el('li', '', t)));
-}
-$('#an-periodo').addEventListener('change', (e) => { an.periodo = e.target.value; disegna(); });
-
-/* ---------- Dettaglio contratto ---------- */
-const GRUPPI = [
-  { titolo: 'Vendita', voci: [['Data', 'data', 'data'], ['Brand', 'brand'], ['Modello', 'modello'], ['Alimentazione', 'alimentazione'], ['Venditore', 'venditore'], ['Prezzo di listino', 'prezzo_listino', 'eur'], ['Sconto', 'sconto', 'eur'], ['Contributo del brand', 'campagna_brand', 'eur'], ['Bonus del brand', 'altri_bonus_brand', 'eur'], ["Costo d'acquisto", 'costo_acquisto', 'eur']] },
-  { titolo: "Costi dell'auto", voci: [['Preparazione', 'costo_preparazione', 'eur'], ['Trasporto', 'costo_trasporto', 'eur']] },
-  { titolo: 'Permuta', se: 'permuta', voci: [['Auto', 'permuta_modello'], ['Entrata il', 'permuta_data_giacenza', 'data'], ['Ferma da', 'permuta_giorni_giacenza', 'giorni'], ['Valutazione', 'permuta_valutazione', 'eur'], ['Valore in piazzale', 'permuta_costo_stock', 'eur'], ['Interessi pagati', 'permuta_interessi_passivi', 'eur2'], ['Stato', 'permuta_stato']] },
-  { titolo: 'Finanziamento', se: 'finanziamento', voci: [['Tipo', 'fin_tipo'], ['Importo finanziato', 'fin_importo', 'eur'], ['Tasso (TAN)', 'fin_tasso', 'tan'], ['Provvigione', 'fin_provvigione', 'eur'], ['Premio della finanziaria', 'fin_rappel', 'eur'], ['Al venditore', 'fin_provvigione_venditore', 'eur']] },
-  { titolo: 'Assicurazione', se: 'assicurazione', voci: [['Tipo', 'ass_tipo'], ['Premio', 'ass_importo', 'eur'], ['Provvigione', 'ass_provvigione', 'eur'], ['Premio della compagnia', 'ass_rappel', 'eur'], ['Al venditore', 'ass_provvigione_venditore', 'eur']] },
-];
-const formatta = (v, f) => (f === 'data' ? (v ? fNumData.format(aData(v)) : '—') : f === 'tan' ? (vuoto(v) ? 'n.d.' : `${fNum.format(Number(v))}%`) : f ? FMT[f](v) : v || '—');
-function dettaglio(c, m) {
-  const box = $('#dettaglio');
-  if (!c || !m) { box.hidden = true; box.replaceChildren(); return; }
-  box.hidden = false;
-  const testa = el('div', 'cv-detail-head');
-  testa.append(el('h4', '', `${c.contratto} · ${c.brand} ${c.modello}`));
-  const chiudi = el('button', 'cv-ghost', 'Chiudi');
-  chiudi.addEventListener('click', () => { stato.scelto = null; disegna(); });
-  testa.append(chiudi);
-  const griglia = el('div', 'cv-detail-grid');
-  const where = `contratto=${enc(c.contratto)}`;
-  const sm = el('div', 'cv-group');
-  sm.append(el('h5', '', 'Margine del contratto'));
-  const dlm = el('dl', 'cv-tot');
-  [['Incasso auto (IVA esclusa)', 'ricavo_netto'], ['Margine sulla vendita', 'margine_veicolo'], ['Margine finanziamento', 'margine_fin'], ['Margine assicurazione', 'margine_ass'], ['Margine totale', 'margine_totale']].forEach(([etich, campo]) => {
-    const dd = el('dd', Number(m[campo]) < 0 ? 'cv-neg' : '', eur(m[campo]));
-    dd.dataset.source = 'margini'; dd.dataset.field = campo; dd.dataset.where = where;
-    dlm.append(el('dt', '', etich), dd);
-  });
-  sm.append(dlm); griglia.append(sm);
-  GRUPPI.forEach((g) => {
-    const sez = el('div', 'cv-group');
-    sez.append(el('h5', '', g.titolo));
-    if (g.se && c[g.se] !== 'Sì') { sez.append(el('p', '', g.se === 'permuta' ? 'Nessuna permuta' : g.se === 'finanziamento' ? 'Pagata senza finanziamento' : 'Nessuna polizza')); griglia.append(sez); return; }
-    const dl = el('dl');
-    g.voci.forEach(([etich, campo, f]) => {
-      const dd = el('dd', '', formatta(c[campo], f));
-      dd.dataset.source = 'contratti'; dd.dataset.field = campo; dd.dataset.where = where;
-      dl.append(el('dt', '', etich), dd);
-    });
-    sez.append(dl); griglia.append(sez);
-  });
-  box.replaceChildren(testa, griglia);
-}
-
-/* ---------- Disegno ---------- */
-const riempiTile = (root, mappe, chiavi) => {
-  root.querySelectorAll('[data-fmt]').forEach((n) => {
-    const src = n.dataset.source;
-    const chiave = src === 'kpi' ? chiavi.kpi : src === 'fi_mix' ? `${chiavi.fi}|${n.dataset.ambito}|Totale` : `${chiavi.usato}|${n.dataset.fascia}`;
-    const riga = mappe[src]?.get(chiave);
-    n.dataset.where = `chiave=${enc(chiave)}`;
-    if (!riga) { n.textContent = '—'; return; }
-    n.classList.remove('dash-skeleton');
-    const v = riga[n.dataset.field];
-    if (vuoto(v)) { n._v = undefined; n.textContent = FMT[n.dataset.fmt](v); return; }
-    const f = n.dataset.fmt === 'int' ? (x) => FMT.int(Math.round(x)) : FMT[n.dataset.fmt];
-    conta(n, Number(v), f);
-  });
-};
-
+/* ---------- Tabelle ---------- */
 function tabella(tbody, righe, colonne, chiave, opzioni = {}) {
   if (!righe.length) {
     const tr = el('tr'); const td = el('td', 'cv-empty', opzioni.vuota || 'Nessun dato nel periodo scelto');
@@ -1121,168 +553,358 @@ function tabella(tbody, righe, colonne, chiave, opzioni = {}) {
       if (c.render) c.render(td, r); else td.textContent = c.fmt ? c.fmt(r[c.f], r) : r[c.f] || '—';
       tr.append(td);
     });
-    if (opzioni.dopo) opzioni.dopo(tr, r);
     return tr;
   }));
 }
 
+/* ---------- Controlli ---------- */
+// La pagina ragiona per mese e per marchio. Il resto è fisso: un executive vuole meno rumore possibile.
+const vista = { trend: 'margine_totale' };
+$('#sel-mese').addEventListener('change', (e) => dash.setParams({ mese: e.target.value }));
+$$('#seg-brand button').forEach((x) => x.addEventListener('click', () => dash.setParams({ brand: x.dataset.brand })));
+$$('#seg-trend button').forEach((x) => x.addEventListener('click', () => { vista.trend = x.dataset.misura; disegna(); }));
+$('#btn-pdf').addEventListener('click', () => scaricaReport());
+
+/* ---------- 1. I numeri chiave ---------- */
+const confronto = (box, v, r, f, prima) => {
+  box.replaceChildren(...(vuoto(v) || vuoto(r) ? [] : [freccia(v, r), txt(` ${prima.slice(0, 3)}: ${f(r)}`)].filter(Boolean)));
+  box.title = vuoto(v) || vuoto(r) ? '' : `${maiusc(prima)} allo stesso giorno: ${f(r)}`;
+};
+const NUMERI = [
+  ['#n-fatt', 'fatturato_netto', 'ref_fatturato_netto', eur, 'Fatturato'],
+  ['#n-marg', 'margine_totale', 'ref_margine_totale', eur, 'Margine'],
+  ['#n-medio', 'margine_medio', 'ref_margine_medio', eur, 'Margine per contratto'],
+  ['#n-auto', 'vetture', 'ref_vetture', num, 'Contratti'],
+];
+function numeri(k, fine) {
+  const prima = mesePrima(fine), ok = k && k.vetture;
+  NUMERI.forEach(([sel, c, r, f]) => {
+    $(sel).textContent = ok ? f(k[c]) : '—';
+    confronto($(`${sel}-ref`), ok ? k[c] : null, ok ? k[r] : null, f, prima);
+  });
+}
+
+/* ---------- 2. Cosa ha portato margine e cosa no ---------- */
+const QUOTE = [
+  ['fin', 'pen_fin', 'ref_pen_fin', 'margine_fin', 'fin_n', 'finanziamento'],
+  ['ass', 'pen_ass', 'ref_pen_ass', 'margine_ass', 'ass_n', 'polizza'],
+];
+function quote(k, fine) {
+  const prima = mesePrima(fine), ok = k && k.vetture;
+  QUOTE.forEach(([id, q, r, m, n, nome]) => {
+    $(`#q-${id}`).textContent = ok ? pct(k[q]) : '—';
+    confronto($(`#q-${id}-ref`), ok ? k[q] : null, ok ? k[r] : null, pct, prima);
+    righe($(`#q-${id}-rows`), ok ? [
+      ['Contratti', `${num(k[n])} su ${num(k.vetture)}`],
+      [`Margine per ${nome}`, k[n] ? eur(k[m] / k[n]) : '—'],
+      ['Margine totale', eur(k[m]), 'cv-tot'],
+    ] : []);
+  });
+}
+
+// Il ponte del margine: da quanto lascerebbe il listino a quanto resta davvero, voce per voce.
+function vociPonte(k) {
+  return [
+    { nome: 'Margine di listino', v: k.margine_listino, tot: true },
+    { nome: 'Sconti ai clienti', v: -k.sconti },
+    { nome: 'Contributi e bonus del brand', v: k.campagne + k.bonus },
+    { nome: 'Preparazione e trasporto', v: -k.costi },
+    { nome: 'Margine sulle auto', v: k.margine_veicolo, tot: true },
+    { nome: 'Finanziamenti', v: k.margine_fin, col: 'var(--mix-fin)' },
+    { nome: 'Polizze', v: k.margine_ass, col: 'var(--mix-ass)' },
+    { nome: 'Margine totale', v: k.margine_totale, tot: true },
+  ];
+}
+const segmentiPonte = (k) => {
+  let cum = 0;
+  return vociPonte(k).map((x) => {
+    if (x.tot) { cum = x.v; return { ...x, da: 0, a: x.v }; }
+    const da = cum; cum += x.v;
+    return { ...x, da, a: cum };
+  });
+};
+const valorePonte = (s) => (s.tot ? eur(s.v) : `${s.v < 0 ? '−' : '+'}${fEur.format(Math.abs(s.v))}`);
+function ponte(k) {
+  const box = $('#ponte');
+  if (!k || !k.vetture) { box.replaceChildren(el('p', 'cv-note', 'Nessuna auto venduta nel mese.')); return; }
+  const seg = segmentiPonte(k);
+  const lo = Math.min(0, ...seg.map((s) => Math.min(s.da, s.a))), hi = Math.max(...seg.map((s) => Math.max(s.da, s.a)));
+  const W = Math.max(280, box.clientWidth), stretto = W < 520;
+  const L = stretto ? 0 : 200, R = 96, rowH = stretto ? 44 : 32, barH = 16;
+  const H = seg.length * rowH + 4;
+  const x = (v) => L + ((v - lo) / (hi - lo || 1)) * (W - L - R);
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  const add = (tag, attr, testo) => { const n = document.createElementNS(ns, tag); Object.entries(attr).forEach(([a, v]) => n.setAttribute(a, v)); if (testo !== undefined) n.textContent = testo; svg.append(n); return n; };
+  if (lo < 0) add('line', { x1: x(0), x2: x(0), y1: 0, y2: H, stroke: 'var(--cds-chart-axis)', 'stroke-width': 1 });
+  seg.forEach((s, i) => {
+    const y0 = i * rowH + (stretto ? 20 : (rowH - barH) / 2);
+    const colore = s.tot ? 'var(--color-fg)' : s.col || (s.v < 0 ? 'var(--color-bad)' : 'var(--color-ok)');
+    const xa = x(Math.min(s.da, s.a)), xb = x(Math.max(s.da, s.a));
+    const r = add('rect', { x: xa, y: y0, width: Math.max(2, xb - xa), height: barH, rx: 3, fill: colore, 'fill-opacity': s.tot ? 0.85 : 1 });
+    const tip = document.createElementNS(ns, 'title'); tip.textContent = `${s.nome}: ${valorePonte(s)}`; r.append(tip);
+    add('text', { x: stretto ? 0 : L - 12, y: stretto ? y0 - 6 : y0 + barH - 3, 'text-anchor': stretto ? 'start' : 'end', class: s.tot ? 'cv-ponte-tot' : '' }, s.nome);
+    add('text', { x: xb + 8, y: y0 + barH - 3, class: s.tot ? 'cv-ponte-tot' : '' }, valorePonte(s));
+    if (!stretto && i < seg.length - 1) {
+      const yN = (i + 1) * rowH + (stretto ? 20 : (rowH - barH) / 2);
+      add('line', { x1: x(s.a), x2: x(s.a), y1: y0 + barH, y2: yN, stroke: 'var(--cds-chart-reference)', 'stroke-width': 1, 'stroke-dasharray': '2 3' });
+    }
+  });
+  box.replaceChildren(svg);
+}
+
+// Le due domande: ogni regola risponde a una delle due.
+const PER_DOMANDA = { margine: ['SCO-01', 'VEN-01'], vendite: ['FIN-02', 'ASS-02'] };
+const testoDi = (nodi) => nodi.map((n) => (typeof n === 'string' ? n : n.textContent)).join('');
+function listaAzioni(lista, segnali, n, vuota) {
+  if (!n) { lista.replaceChildren(el('li', 'cv-an-vuoto', 'Nessuna auto venduta nel mese.')); return; }
+  if (!segnali.length) { lista.replaceChildren(el('li', 'cv-an-vuoto', vuota)); return; }
+  lista.replaceChildren(...segnali.map((s, i) => {
+    const li = el('li');
+    const box = el('details', 'cv-az');
+    const sum = el('summary');
+    sum.append(el('span', 'cv-an-rank', String(i + 1)), el('span', 'cv-az-titolo', AZIONE_BREVE[s.codice](s)), el('span', 'cv-az-valore', piuEuro(s.valore)));
+    const corpo = el('div', 'cv-az-corpo');
+    const perche = el('p'); perche.append(b(`${s.titolo}. `), ...s.perche);
+    const fare = el('p'); fare.append(b('Cosa cambiare: '), txt(s.azione));
+    corpo.append(perche, fare);
+    if (s.leva && sim.base) { const bt = el('button', 'cv-todo-btn', 'Simula questa azione'); bt.type = 'button'; bt.addEventListener('click', () => apriNelSimulatore(s.leva)); corpo.append(bt); }
+    corpo.append(el('p', 'cv-az-fonte', `Regola ${s.codice} · affidabilità ${s.fid}`));
+    box.append(sum, corpo);
+    li.append(box);
+    return li;
+  }));
+}
+function domande(contratti, marg, brand, mese) {
+  const per = periodiDisponibili().find((x) => x.id === `m|${mese}`);
+  const righeTutte = contratti.map((r) => ({ ...r, ...(marg.get(r.contratto) || {}) }));
+  const A = per ? analizzaPeriodo(righeTutte, per, brand) : { C: { N: 0 }, segnali: [] };
+  const gruppi = {
+    margine: A.segnali.filter((s) => PER_DOMANDA.margine.includes(s.codice)),
+    vendite: A.segnali.filter((s) => PER_DOMANDA.vendite.includes(s.codice)),
+  };
+  listaAzioni($('#d-margine'), gruppi.margine, A.C.N, 'Niente da segnalare: sconti in linea tra i venditori e nessuna auto venduta sotto costo.');
+  listaAzioni($('#d-vendite'), gruppi.vendite, A.C.N, 'Niente da segnalare: tutti i venditori propongono finanziamenti e polizze come i colleghi.');
+  return gruppi;
+}
+
+/* ---------- 3. Per approfondire: andamento per mese e venditori ---------- */
+const TREND = {
+  fatturato_netto: { nome: 'Fatturato', f: eur, breve: (v) => `${fNum.format(Math.round(v / 1000))}k €` },
+  margine_totale: { nome: 'Margine', f: eur, breve: (v) => `${fNum.format(Math.round(v / 1000))}k €` },
+  margine_medio: { nome: 'Margine per contratto', f: eur, breve: eur },
+  vetture: { nome: 'Contratti', f: num, breve: num },
+};
+function datiTrend(mappaKpi, brand, misura) {
+  const mesi = [...new Set(GIORNI.map((d) => d.slice(0, 7)))];
+  return mesi.map((m) => {
+    const f = fineMeseDati(m), r = mappaKpi.get(`mtd|${f}|${brand}`);
+    return { m, parziale: f < fineMese(m), fino: Number(f.slice(8)), v: r ? Number(r[misura]) || 0 : 0 };
+  });
+}
+function trend(mappaKpi, brand, meseScelto) {
+  const box = $('#trend'), T = TREND[vista.trend];
+  const dati = datiTrend(mappaKpi, brand, vista.trend);
+  const W = Math.max(280, box.clientWidth), H = 220, top = 26, bottom = 40;
+  const max = Math.max(1, ...dati.map((d) => d.v));
+  const slot = W / dati.length, bw = Math.min(64, slot * 0.56);
+  const y = (v) => top + (1 - v / max) * (H - top - bottom);
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', `${T.nome} per mese`);
+  const add = (tag, attr, testo) => { const n = document.createElementNS(ns, tag); Object.entries(attr).forEach(([a, v]) => n.setAttribute(a, v)); if (testo !== undefined) n.textContent = testo; svg.append(n); return n; };
+  add('line', { x1: 0, x2: W, y1: y(0), y2: y(0), stroke: 'var(--cds-chart-axis)', 'stroke-width': 1 });
+  dati.forEach((d, i) => {
+    const cx = slot * (i + 0.5), scelto = d.m === meseScelto;
+    const r = add('rect', { x: cx - bw / 2, y: y(d.v), width: bw, height: Math.max(1, y(0) - y(d.v)), rx: 4,
+      fill: scelto ? 'var(--mix-auto)' : 'var(--bar)', 'fill-opacity': d.parziale ? 0.55 : 1 });
+    const tip = document.createElementNS(ns, 'title');
+    tip.textContent = `${maiusc(meseDi(d.m))}${d.parziale ? ` fino al ${d.fino}` : ''}: ${T.f(d.v)}`;
+    r.append(tip);
+    add('text', { x: cx, y: y(d.v) - 8, 'text-anchor': 'middle', class: scelto ? 'cv-trend-val cv-trend-scelto' : 'cv-trend-val' }, T.breve(d.v));
+    add('text', { x: cx, y: H - bottom + 18, 'text-anchor': 'middle', class: scelto ? 'cv-trend-scelto' : '' }, maiusc(meseDi(d.m)).slice(0, 3));
+    if (d.parziale) add('text', { x: cx, y: H - bottom + 33, 'text-anchor': 'middle', class: 'cv-trend-nota' }, `fino al ${d.fino}`);
+  });
+  box.replaceChildren(svg);
+  const parz = dati.find((d) => d.parziale);
+  $('#trend-nota').textContent = parz ? `${maiusc(meseDi(parz.m))} è in corso: il dato arriva fino al ${parz.fino}.` : '';
+}
+
+const SEGNI_VENDITORE = { 'SCO-01': 'sconta più dei colleghi', 'FIN-02': 'meno finanziamenti', 'ASS-02': 'meno polizze' };
+function segniPerVenditore(gruppi) {
+  const m = new Map();
+  [...gruppi.margine, ...gruppi.vendite].forEach((s) => { if (s.chi && SEGNI_VENDITORE[s.codice]) m.set(s.chi, [...(m.get(s.chi) || []), s.codice]); });
+  return m;
+}
+function venditori(righeV, segni) {
+  const ha = (r, c) => (segni.get(r.venditore) || []).includes(c);
+  tabella($('#tab-venditori tbody'), righeV, [
+    { f: 'venditore', render: (td, r) => { td.append(txt(r.venditore)); const s = segni.get(r.venditore); if (s) td.append(el('span', 'cv-sub', s.map((c) => SEGNI_VENDITORE[c]).join(' · '))); } },
+    { f: 'vetture', num: true, fmt: num },
+    { f: 'fatturato_netto', num: true, hide: true, fmt: eur },
+    { f: 'margine_totale', num: true, fmt: eur, cls: (r) => (r.margine_totale < 0 ? 'cv-neg' : '') },
+    { f: 'margine_medio', num: true, hide: true, fmt: eur, cls: (r) => (r.margine_medio < 0 ? 'cv-neg' : '') },
+    { f: 'sconto_medio_pct', num: true, hide: true, fmt: (v) => (vuoto(v) ? '—' : fPct1.format(v)), cls: (r) => (ha(r, 'SCO-01') ? 'cv-neg' : '') },
+    { f: 'pen_fin', num: true, hide: true, fmt: pct, cls: (r) => (ha(r, 'FIN-02') ? 'cv-neg' : '') },
+    { f: 'pen_ass', num: true, hide: true, fmt: pct, cls: (r) => (ha(r, 'ASS-02') ? 'cv-neg' : '') },
+  ], (r) => r.chiave, { vuota: 'Nessun contratto nel mese' });
+}
+
+/* ---------- Disegno ---------- */
+let REPORT = null;
 function disegna() {
-  const C = dash.data('contratti'), M = dash.data('margini'), K = dash.data('kpi');
-  const FI = dash.data('fi_mix'), V = dash.data('venditori'), U = dash.data('usato');
+  const C = dash.data('contratti'), M = dash.data('margini'), K = dash.data('kpi'), V = dash.data('venditori');
   const p = params();
-
-  $$('#seg-vista button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.vista === p.vista)));
   $$('#seg-brand button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.brand === p.brand)));
-  $$('#seg-misura button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.misura === stato.misura)));
-  $$('.cv-tabs button').forEach((x) => x.setAttribute('aria-selected', String(x.dataset.tab === stato.tab)));
-
-  if (C.status === 'error') return;
+  $$('#seg-trend button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.misura === vista.trend)));
   if (C.status !== 'ok') return;
+
   const contratti = C.data;
   GIORNI = [...new Set(contratti.map((r) => r.data))].sort();
   const mese = meseAttivo(), fine = fineMeseDati(mese);
   const mesi = [...new Set(GIORNI.map((d) => d.slice(0, 7)))];
+  const etichettaMese = (m) => `${maiusc(meseDi(m))} ${m.slice(0, 4)}${m === mesi[mesi.length - 1] && fineMeseDati(m) < fineMese(m) ? ` (fino al ${Number(fineMeseDati(m).slice(8))})` : ''}`;
   const selM = $('#sel-mese');
-  if (selM.options.length !== mesi.length) selM.replaceChildren(...mesi.slice().reverse().map((m) => new Option(`${maiusc(meseDi(m))} ${m.slice(0, 4)}${m === mesi[mesi.length - 1] ? ` (fino al ${Number(fineMeseDati(m).slice(8))})` : ''}`, m)));
+  if (selM.options.length !== mesi.length) selM.replaceChildren(...mesi.slice().reverse().map((m) => new Option(etichettaMese(m), m)));
   selM.value = mese;
+  const marchio = p.brand === 'Tutti' ? 'tutti i marchi' : p.brand;
+  $('#titolo-numeri').textContent = `${etichettaMese(mese)} · ${marchio}`;
 
-  // Il giorno serve solo al dettaglio dei contratti
-  const giorno = giornoAttivo();
-  const iG = GIORNI.indexOf(giorno);
-  const selG = $('#sel-giorno');
-  if (selG.options.length !== GIORNI.length) selG.replaceChildren(...GIORNI.slice().reverse().map((d) => new Option(maiusc(fSel.format(aData(d)).replace(/\./g, '')), d)));
-  selG.value = giorno;
-  $('#btn-prev').disabled = iG <= 0;
-  $('#btn-next').disabled = iG >= GIORNI.length - 1;
+  const mappaKpi = K.status === 'ok' ? new Map(K.data.map((r) => [r.chiave, r])) : new Map();
+  const k = mappaKpi.get(`mtd|${fine}|${p.brand}`);
+  numeri(k, fine);
+  quote(k, fine);
+  ponte(k);
 
-  const nelPeriodo = (r) => (p.vista === 'giorno' ? r.data === giorno : r.data.slice(0, 7) === giorno.slice(0, 7) && r.data <= giorno);
-  const chiavi = { kpi: `mtd|${fine}|${p.brand}`, fi: `mtd|${fine}|${p.brand}`, usato: p.brand };
-  const mappe = {
-    kpi: K.status === 'ok' ? new Map(K.data.map((r) => [r.chiave, r])) : new Map(),
-    fi_mix: FI.status === 'ok' ? new Map(FI.data.map((r) => [r.chiave, r])) : new Map(),
-    usato: U.status === 'ok' ? new Map(U.data.map((r) => [r.chiave, r])) : new Map(),
+  let gruppi = { margine: [], vendite: [] };
+  if (M.status === 'ok') {
+    const margMap = new Map(M.data.map((r) => [r.contratto, r]));
+    simulatore(contratti, margMap, mappaKpi, fine, p.brand);
+    gruppi = domande(contratti, margMap, p.brand, mese);
+  }
+  trend(mappaKpi, p.brand, mese);
+
+  const segni = segniPerVenditore(gruppi);
+  const righeV = V.status === 'ok' ? V.data.filter((r) => r.vista === 'mtd' && r.periodo === fine && r.brand === p.brand).sort((a, c) => c.margine_totale - a.margine_totale) : [];
+  $('#titolo-venditori').textContent = `Venditori · ${etichettaMese(mese)}`;
+  venditori(righeV, segni);
+
+  REPORT = { mese, fine, etichetta: etichettaMese(mese), marchio, k, gruppi, righeV, segni };
+}
+
+/* ---------- Report PDF ---------- */
+// Un report di due pagine al massimo, con gli stessi numeri della schermata: da mandare a chi non apre il cruscotto.
+const pdfTxt = (s) => String(s).replace(/−/g, '-').replace(/[   ]/g, ' ');
+function scaricaReport() {
+  const nota = $('#pdf-nota');
+  if (!REPORT || !REPORT.k) { nota.textContent = 'I dati non sono ancora pronti.'; return; }
+  if (!window.jspdf) { nota.textContent = 'Serve la connessione a internet per creare il PDF.'; return; }
+  nota.textContent = '';
+  const { k, gruppi, righeV, segni, etichetta, marchio, fine, mese } = REPORT;
+  const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+  const M = 16, CW = 210 - 2 * M, FONDO = 278;
+  const INK = [18, 33, 58], MUTED = [90, 101, 119], LINE = [232, 234, 239], OK = [29, 122, 76], BAD = [184, 53, 43], FIN = [227, 155, 46], ASS = [42, 157, 143];
+  let y = 18;
+  const font = (size, stile = 'normal', col = INK) => { doc.setFont('helvetica', stile); doc.setFontSize(size); doc.setTextColor(...col); };
+  const spazio = (h) => { if (y + h > FONDO) { doc.addPage(); y = 18; } };
+  const scrivi = (s, x, yy, opt) => doc.text(pdfTxt(s), x, yy, opt);
+  const paragrafo = (s, x, w, size = 9.5, col = MUTED, stile = 'normal') => {
+    font(size, stile, col);
+    const righeT = doc.splitTextToSize(pdfTxt(s), w);
+    const h = righeT.length * size * 0.42;
+    spazio(h + 1);
+    doc.text(righeT, x, y + size * 0.3);
+    y += h + 1.5;
   };
-  const kMese = mappe.kpi.get(chiavi.kpi);
-  const kDet = mappe.kpi.get(`${p.vista}|${giorno}|${p.brand}`);
-  if (!(kDet && kDet.neg_veicolo > 0)) stato.soloNeg = false;
+  const titolo = (s) => { spazio(14); y += 4; font(12.5, 'bold'); scrivi(s, M, y); y += 2.5; doc.setDrawColor(...LINE); doc.line(M, y, M + CW, y); y += 5; };
+  const prima = mesePrima(fine);
 
-  // 1–3: il margine del mese contro l'obiettivo, tre numeri, tre cose da fare
-  riempiTile(document, mappe, chiavi);
-  if (K.status === 'ok') {
-    obiettivo(mappe.kpi, fine, p.brand, stato.misura);
-    tre(kMese, fine);
-    riepilogo(kMese, { vista: 'mtd', brand: p.brand }, fine);
-    if (M.status === 'ok') {
-      const margMap = new Map(M.data.map((r) => [r.contratto, r]));
-      simulatore(contratti, margMap, mappe.kpi, fine, p.brand);
-      azioni(contratti, margMap, p.brand, mese);
-      analisi(contratti, margMap, p.brand);
-    }
-  }
+  // Testata
+  font(18, 'bold'); scrivi('Report del mese', M, y); y += 7;
+  font(10, 'normal', MUTED);
+  scrivi(`Concessionaria Demo · ${etichetta} · ${marchio} · creato il ${fNumData.format(new Date())}`, M, y); y += 4.5;
+  scrivi(`Confronto con ${prima} allo stesso giorno. Importi IVA esclusa. Dati di esempio.`, M, y); y += 8;
 
-  // 5: Approfondisci
-  if (stato.tab === 'mese' && kMese) {
-      const righeBrand = BRANDS.map((x) => mappe.kpi.get(`mtd|${fine}|${x}`)).filter(Boolean);
-      const maxMedio = d3.max(righeBrand, (r) => Math.max(0, r.margine_medio || 0)) || 1;
-      tabella($('#tab-brand tbody'), righeBrand, [
-        { f: 'brand', render: (td, r) => { const sw = el('i', 'cv-sw'); sw.style.background = colore(r.brand); td.append(sw, txt(` ${r.brand}`)); } },
-        { f: 'vetture', num: true, fmt: num },
-        { f: 'margine_veicolo', num: true, hide: true, fmt: eur, cls: (r) => (r.margine_veicolo < 0 ? 'cv-neg' : '') },
-        { f: 'margine_fi', num: true, hide: true, fmt: eur },
-        { f: 'margine_totale', num: true, fmt: eur },
-        { f: 'margine_medio', num: true, render: (td, r) => { const w = el('div', 'cv-bar'); const bar = el('i'); bar.style.width = `${Math.round((Math.max(0, r.margine_medio || 0) / maxMedio) * 48)}px`; bar.style.background = colore(r.brand); w.append(bar, el('span', '', eur(r.margine_medio))); td.append(w); } },
-      ], (r) => r.chiave, { classe: () => 'cv-click', dopo: (tr, r) => { tr.dataset.brand = r.brand; tr.setAttribute('aria-selected', String(p.brand === r.brand)); } });
-      $('#nota-sconto').textContent = vuoto(kMese.sconto_medio_pct) ? '' : `Sconto medio sul listino: ${fPct1.format(kMese.sconto_medio_pct)}. Auto ritirate in permuta: ${num(kMese.permute)}.`;
-  }
+  // 1. I numeri chiave
+  const bw = (CW - 9) / 4;
+  NUMERI.forEach(([, c, r, f, nome], i) => {
+    const x = M + i * (bw + 3);
+    doc.setDrawColor(...LINE); doc.roundedRect(x, y, bw, 22, 2, 2);
+    font(8, 'normal', MUTED); scrivi(nome, x + 3, y + 5.5);
+    font(13, 'bold'); scrivi(f(k[c]), x + 3, y + 13);
+    font(8, 'normal', MUTED); scrivi(vuoto(k[r]) ? '' : `${prima.slice(0, 3)}: ${f(k[r])}`, x + 3, y + 18.5);
+  });
+  y += 28;
 
-  if (stato.tab === 'vendite') {
-    if (kDet) {
-      const chip = $('#chip-negativi');
-      chip.hidden = !(kDet.neg_veicolo > 0);
-      chip.querySelector('[data-field]').textContent = num(kDet.neg_veicolo);
-      $('#chip-negativi-txt').textContent = (kDet.neg_veicolo === 1 ? 'venduta sotto costo' : 'vendute sotto costo') + (stato.soloNeg ? ' · mostra tutti' : ' · mostra solo queste');
-      chip.setAttribute('aria-pressed', String(stato.soloNeg));
-    }
+  // 2. Cosa ha portato margine e cosa no
+  titolo('Cosa ha portato margine e cosa no');
+  const seg = segmentiPonte(k);
+  const lo = Math.min(0, ...seg.map((s) => Math.min(s.da, s.a))), hi = Math.max(...seg.map((s) => Math.max(s.da, s.a)));
+  const X0 = M + 58, XW = CW - 58 - 30;
+  const px = (v) => X0 + ((v - lo) / (hi - lo || 1)) * XW;
+  seg.forEach((s) => {
+    spazio(7);
+    font(9, s.tot ? 'bold' : 'normal', s.tot ? INK : MUTED); scrivi(s.nome, M, y + 3.6);
+    const col = s.tot ? INK : s.nome === 'Finanziamenti' ? FIN : s.nome === 'Polizze' ? ASS : s.v < 0 ? BAD : OK;
+    doc.setFillColor(...col);
+    const xa = px(Math.min(s.da, s.a)), xb = px(Math.max(s.da, s.a));
+    doc.rect(xa, y + 0.8, Math.max(0.6, xb - xa), 4, 'F');
+    font(9, s.tot ? 'bold' : 'normal'); scrivi(valorePonte(s), M + CW, y + 3.6, { align: 'right' });
+    y += 6.5;
+  });
+  y += 2;
+  QUOTE.forEach(([, q, r, m, n, nome]) => {
+    paragrafo(`Auto con ${nome}: ${pct(k[q])} (${num(k[n])} su ${num(k.vetture)})${vuoto(k[r]) ? '' : `, ${prima.slice(0, 3)}: ${pct(k[r])}`}. Margine per ${nome}: ${k[n] ? eur(k[m] / k[n]) : '—'}, in totale ${eur(k[m])}.`, M, CW, 9.5, INK);
+  });
 
-    const marg = M.status === 'ok' ? new Map(M.data.map((r) => [r.contratto, r])) : new Map();
-    let righe = contratti.filter((r) => nelPeriodo(r) && (p.brand === 'Tutti' || r.brand === p.brand)).map((r) => ({ ...r, ...(marg.get(r.contratto) || {}) }));
-    $('#titolo-contratti').textContent = `Contratti · ${righe.length}`;
-    if (stato.soloNeg) righe = righe.filter((r) => r.margine_veicolo < 0);
-    if (stato.cerca) righe = righe.filter((r) => [r.contratto, r.modello, r.brand, r.venditore, r.permuta_modello, r.fin_tipo, r.ass_tipo].join(' ').toLowerCase().includes(stato.cerca));
-    const { k: ok, dir } = stato.ordina;
-    const numerico = !['contratto', 'modello', 'venditore'].includes(ok);
-    righe.sort((a, c) => (numerico ? (Number(a[ok]) || 0) - (Number(c[ok]) || 0) : String(a[ok] || '').localeCompare(String(c[ok] || ''), 'it')) * dir);
-    $$('#tab-contratti th').forEach((th) => { const x = th.querySelector('button'); th.setAttribute('aria-sort', x && x.dataset.sort === ok ? (dir > 0 ? 'ascending' : 'descending') : 'none'); });
-    const negCls = (f) => (r) => (Number(r[f]) < 0 ? 'cv-neg' : '');
-    tabella($('#tab-contratti tbody'), righe, [
-      { f: 'contratto', hide: true, render: (td, r) => { td.append(txt(r.contratto)); if (p.vista === 'mtd') td.append(el('span', 'cv-sub', fNumData.format(aData(r.data)))); } },
-      { f: 'modello', render: (td, r) => { td.append(txt(r.modello), el('span', 'cv-sub', `${r.brand} · ${r.alimentazione}`)); } },
-      { f: 'venditore', hide: true },
-      { f: 'prezzo_listino', num: true, hide: true, fmt: eur },
-      { f: 'sconto', num: true, hide: true, render: (td, r) => { td.append(txt(eur(r.sconto)), el('span', 'cv-sub', fPct1.format(Number(r.sconto) / Number(r.prezzo_listino)))); } },
-      { f: 'margine_veicolo', num: true, fmt: eur, cls: negCls('margine_veicolo') },
-      { f: 'margine_fi', num: true, hide: true, fmt: eur },
-      { f: 'margine_totale', num: true, fmt: eur, cls: negCls('margine_totale') },
-    ], (r) => r.contratto, {
-      vuota: stato.cerca ? 'Nessun contratto corrisponde alla ricerca' : stato.soloNeg ? 'Nessuna auto venduta sotto costo' : 'Nessun contratto nel periodo scelto',
-      classe: () => 'cv-click',
-      dopo: (tr, r) => { tr.tabIndex = 0; tr.setAttribute('aria-selected', String(stato.scelto === r.contratto)); },
+  const domanda = (nome, lista, vuota) => {
+    titolo(nome);
+    if (!lista.length) { paragrafo(vuota, M, CW); return; }
+    lista.forEach((s, i) => {
+      spazio(16);
+      font(10.5, 'bold'); scrivi(`${i + 1}. ${AZIONE_BREVE[s.codice](s)}`, M, y + 3.5);
+      font(10.5, 'bold', OK); scrivi(`${piuEuro(s.valore)} al mese`, M + CW, y + 3.5, { align: 'right' });
+      y += 6.5;
+      paragrafo(`${s.titolo}. ${testoDi(s.perche)}`, M + 5, CW - 5);
+      paragrafo(`Cosa cambiare: ${s.azione}`, M + 5, CW - 5, 9.5, INK);
+      paragrafo(`Regola ${s.codice} · affidabilità ${s.fid}`, M + 5, CW - 5, 8);
+      y += 1.5;
     });
-    const scelto = stato.scelto && contratti.find((r) => r.contratto === stato.scelto);
-    dettaglio(scelto, scelto && marg.get(scelto.contratto));
-  }
+  };
+  domanda('Dove potevi guadagnare di più', gruppi.margine, 'Niente da segnalare: sconti in linea tra i venditori e nessuna auto venduta sotto costo.');
+  domanda('Dove potevi vendere di più', gruppi.vendite, 'Niente da segnalare: tutti i venditori propongono finanziamenti e polizze come i colleghi.');
+  paragrafo('Stime al mese, arrotondate: i valori in parte si sovrappongono. Regole di esempio, con soglie da tarare sui dati della concessionaria.', M, CW, 8);
 
-  if (stato.tab === 'fi') {
-    const fiRighe = (ambito) => (FI.status === 'ok' ? FI.data.filter((r) => r.vista === 'mtd' && r.periodo === fine && r.brand === p.brand && r.ambito === ambito && (r.contratti > 0 || r.tipo === 'Totale')) : []);
-    const tot = (r) => (r.tipo === 'Totale' ? 'cv-totrow' : '');
-    const fin = fiRighe('Finanziamento');
-    tabella($('#tab-fin tbody'), fin.length > 1 ? fin : [], [
-      { f: 'tipo' }, { f: 'contratti', num: true, fmt: num }, { f: 'importo', num: true, hide: true, fmt: eur },
-      { f: 'tasso_medio', num: true, hide: true, fmt: (v) => (vuoto(v) ? 'n.d.' : `${fNum.format(v)}%`) },
-      { f: 'provvigioni_rappel', num: true, fmt: eur },
-    ], (r) => r.chiave, { classe: tot, vuota: 'Nessun finanziamento nel periodo scelto' });
-    const ass = fiRighe('Assicurazione');
-    tabella($('#tab-ass tbody'), ass.length > 1 ? ass : [], [
-      { f: 'tipo' }, { f: 'contratti', num: true, fmt: num }, { f: 'importo', num: true, hide: true, fmt: eur },
-      { f: 'provvigioni_rappel', num: true, fmt: eur },
-    ], (r) => r.chiave, { classe: tot, vuota: 'Nessuna polizza nel periodo scelto' });
-    const vend = V.status === 'ok' ? V.data.filter((r) => r.vista === 'mtd' && r.periodo === fine && r.brand === p.brand).sort((a, c) => c.margine_totale - a.margine_totale) : [];
-    tabella($('#tab-venditori tbody'), vend, [
-      { f: 'venditore' }, { f: 'vetture', num: true, fmt: num }, { f: 'margine_totale', num: true, fmt: eur },
-      { f: 'margine_medio', num: true, hide: true, fmt: eur, cls: (r) => (r.margine_medio < 0 ? 'cv-neg' : '') },
-      { f: 'pen_fin', num: true, hide: true, fmt: pct }, { f: 'pen_ass', num: true, hide: true, fmt: pct },
-    ], (r) => r.chiave, { vuota: 'Nessun contratto nel periodo scelto' });
-  }
+  // Venditori: la tabella resta tutta sulla stessa pagina
+  spazio(18 + righeV.length * 5.5);
+  titolo('Venditori');
+  const col = [
+    ['Venditore', M, 'left'], ['Contratti', M + 62, 'right'], ['Fatturato', M + 88, 'right'], ['Margine', M + 110, 'right'],
+    ['Per contr.', M + 130, 'right'], ['Sconto', M + 146, 'right'], ['Finanz.', M + 162, 'right'], ['Polizza', M + CW, 'right'],
+  ];
+  font(8, 'bold', MUTED); col.forEach(([t, x, a]) => scrivi(t, x, y, { align: a })); y += 2; doc.line(M, y, M + CW, y); y += 4.5;
+  righeV.forEach((r) => {
+    spazio(6);
+    const s = segni.get(r.venditore) || [];
+    const val = [r.venditore, num(r.vetture), eur(r.fatturato_netto), eur(r.margine_totale), eur(r.margine_medio),
+      vuoto(r.sconto_medio_pct) ? '—' : fPct1.format(r.sconto_medio_pct), pct(r.pen_fin), pct(r.pen_ass)];
+    const rosso = [false, false, false, r.margine_totale < 0, r.margine_medio < 0, s.includes('SCO-01'), s.includes('FIN-02'), s.includes('ASS-02')];
+    col.forEach(([, x, a], i) => { font(9, rosso[i] ? 'bold' : 'normal', rosso[i] ? BAD : INK); scrivi(val[i], x, y, { align: a }); });
+    y += 5.5;
+  });
+  if (!righeV.length) paragrafo('Nessun contratto nel mese.', M, CW);
 
-  if (stato.tab === 'usato') {
-    $('#chip-situazione').textContent = `Situazione al ${fNumData.format(aData(GIORNI[GIORNI.length - 1]))}`;
-    const fasce = ['0–30 giorni', '31–60 giorni', '61–90 giorni', 'Oltre 90 giorni'];
-    const nomi = ['Meno di 1 mese', '1–2 mesi', '2–3 mesi', 'Più di 3 mesi'];
-    const tinte = [18, 42, 70, 100].map((q) => `color-mix(in srgb, var(--color-bad) ${q}%, var(--color-panel))`);
-    const righeF = fasce.map((f) => mappe.usato.get(`${p.brand}|${f}`)).filter(Boolean);
-    $('#barra-aging').replaceChildren(...righeF.filter((r) => r.permute > 0).map((r) => { const s = el('span'); s.style.flex = `${r.permute} 1 0`; s.style.background = tinte[fasce.indexOf(r.fascia)]; return s; }));
-    $('#legenda-aging').replaceChildren(...righeF.map((r) => {
-      const i = fasce.indexOf(r.fascia);
-      const s = el('span'); const sw = el('i', 'cv-sw'); sw.style.background = tinte[i];
-      s.append(sw, txt(`${nomi[i]}: `), b(num(r.permute)), txt(r.interessi_passivi > 0 ? ` · ${eur(r.interessi_passivi)} di interessi` : ''));
-      return s;
-    }));
-    const stock = contratti.filter((r) => r.permuta_stato === 'In stock' && (p.brand === 'Tutti' || r.brand === p.brand))
-      .sort((a, c) => Number(c.permuta_giorni_giacenza) - Number(a.permuta_giorni_giacenza));
-    tabella($('#tab-stock tbody'), stock, [
-      { f: 'permuta_modello', render: (td, r) => { td.append(txt(r.permuta_modello), el('span', 'cv-sub', `permuta di ${r.contratto}`)); } },
-      { f: 'permuta_data_giacenza', hide: true, fmt: (v) => fNumData.format(aData(v)) },
-      { f: 'permuta_giorni_giacenza', num: true, render: (td, r) => { const g = Number(r.permuta_giorni_giacenza); td.append(el('span', `cv-chip ${g > 90 ? 'cv-bad' : g > 60 ? 'cv-warn' : g <= 30 ? 'cv-ok' : ''}`, `${g} giorni`)); } },
-      { f: 'permuta_costo_stock', num: true, hide: true, fmt: eur },
-      { f: 'permuta_interessi_passivi', num: true, fmt: eur },
-    ], (r) => r.contratto, { vuota: 'Nessun usato in piazzale' });
+  // Piede su ogni pagina
+  const pagine = doc.getNumberOfPages();
+  for (let i = 1; i <= pagine; i++) {
+    doc.setPage(i);
+    font(8, 'normal', MUTED);
+    scrivi('Cruscotto concessionaria · dati di esempio · importi IVA esclusa', M, 290);
+    scrivi(`${i} di ${pagine}`, M + CW, 290, { align: 'right' });
   }
+  doc.save(`report-${mese}-${marchio.replace(/\s+/g, '-').toLowerCase()}.pdf`);
 }
 
 dash.onData(disegna);
-
-const iniziale = location.hash.slice(1);
-// Un indirizzo con #segnali, #contratti ecc. apre direttamente il dettaglio; #analisi è il vecchio nome di #segnali.
-const SCHEDE = ['mese', 'vendite', 'fi', 'usato', 'simula', 'segnali'];
-const daAprire = iniziale === 'analisi' ? 'segnali' : iniziale;
-if (SCHEDE.includes(daAprire)) { $('#approfondisci').open = true; mostraTab(daAprire); } else mostraTab('mese', false);

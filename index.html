@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="only light">
 <title>Cruscotto concessionaria</title>
-<meta name="description" content="Demo: il margine del mese e le tre cose da fare in una concessionaria multimarca (Jeep, BYD, Volkswagen), con dati di esempio.">
+<meta name="description" content="Demo: i numeri del mese di una concessionaria multimarca (Jeep, BYD, Volkswagen), dove potevi guadagnare e vendere di più, con dati di esempio.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=20261020f">
+<link rel="stylesheet" href="assets/style.css?v=20261021b">
 </head>
 <body>
 <main class="wrap" id="dash-root">
@@ -28,283 +28,121 @@
         <button data-brand="BYD">BYD</button>
         <button data-brand="Volkswagen">Volkswagen</button>
       </div>
+      <button type="button" class="cv-todo-btn cv-pdf" id="btn-pdf">Scarica il report PDF</button>
+      <span class="cv-note" id="pdf-nota" role="status"></span>
     </div>
   </header>
 
-  <!-- 1. Il margine del mese contro l'obiettivo: la risposta in un colpo d'occhio -->
-  <section class="cv-hero cv-goal" id="card-obiettivo" aria-labelledby="titolo-obiettivo">
-    <div class="cv-hero-head">
-      <h1 class="cv-qlabel" id="titolo-obiettivo">Margine del mese</h1>
-    </div>
-    <div class="cv-goal-big"><span id="goal-fatto">—</span><small id="goal-su"></small></div>
-    <div class="cv-goal-bar" id="goal-barra">
-      <div class="cv-goal-fill" id="goal-fill"></div>
-      <div class="cv-goal-mark" id="goal-mark" hidden><span>oggi</span></div>
-    </div>
-    <p class="cv-goal-msg" id="goal-msg"></p>
-    <div class="cv-goal-edit">
-      <button type="button" class="cv-linkbtn" id="goal-modifica" aria-expanded="false" aria-controls="goal-form">Cambia obiettivo</button>
-      <span class="cv-note" id="goal-nota"></span>
-      <form class="cv-goal-form" id="goal-form" hidden>
-        <label for="goal-input" id="goal-input-label">Obiettivo del mese</label>
-        <div class="cv-goal-form-row">
-          <input class="cv-select" id="goal-input" type="number" inputmode="numeric" min="1" step="1" required>
-          <button type="submit" class="cv-todo-btn">Salva</button>
-          <button type="button" class="cv-linkbtn" id="goal-reset">Togli l'obiettivo</button>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <!-- 2. Tre numeri, ognuno confrontato con il mese prima -->
-  <section class="cv-tre" aria-label="I numeri del mese">
-    <div class="cv-tre-item"><div class="cv-tre-label">Auto vendute</div><div class="cv-tre-val" id="t-auto">—</div><div class="cv-tre-ref" id="t-auto-ref"></div></div>
-    <div class="cv-tre-item"><div class="cv-tre-label">Margine per auto</div><div class="cv-tre-val" id="t-medio">—</div><div class="cv-tre-ref" id="t-medio-ref"></div></div>
-    <div class="cv-tre-item"><div class="cv-tre-label">Con finanziamento</div><div class="cv-tre-val" id="t-fin">—</div><div class="cv-tre-ref" id="t-fin-ref"></div></div>
-  </section>
-
-  <!-- 3. Le tre cose da fare, calcolate sul mese -->
-  <section class="cv-sec" id="sez-azioni" aria-labelledby="titolo-azioni">
+  <!-- 1. I numeri chiave del mese -->
+  <section class="cv-sec" aria-labelledby="titolo-numeri">
     <div>
-      <h2 class="cv-h2" id="titolo-azioni">Cosa fare questa settimana</h2>
-      <p class="cv-note" id="azioni-nota"></p>
+      <h1 class="cv-h2" id="titolo-numeri">Il mese</h1>
+      <p class="cv-note">Ogni numero è confrontato con il mese prima allo stesso giorno. Importi IVA esclusa.</p>
     </div>
-    <ol class="cv-azioni" id="azioni"></ol>
-    <button type="button" class="cv-linkbtn cv-azioni-tutti" id="azioni-tutti" hidden></button>
+    <div class="cv-tre cv-quattro">
+      <div class="cv-tre-item"><div class="cv-tre-label">Fatturato</div><div class="cv-tre-val" id="n-fatt">—</div><div class="cv-tre-ref" id="n-fatt-ref"></div></div>
+      <div class="cv-tre-item"><div class="cv-tre-label">Margine</div><div class="cv-tre-val" id="n-marg">—</div><div class="cv-tre-ref" id="n-marg-ref"></div></div>
+      <div class="cv-tre-item"><div class="cv-tre-label">Margine per contratto</div><div class="cv-tre-val" id="n-medio">—</div><div class="cv-tre-ref" id="n-medio-ref"></div></div>
+      <div class="cv-tre-item"><div class="cv-tre-label">Contratti</div><div class="cv-tre-val" id="n-auto">—</div><div class="cv-tre-ref" id="n-auto-ref"></div></div>
+    </div>
   </section>
 
-  <!-- 4. Approfondisci: tutto il dettaglio, chiuso finché non serve -->
-  <details class="cv-deep-box" id="approfondisci">
-    <summary><span class="cv-h2">Approfondisci</span></summary>
-
-    <nav class="cv-tabs" role="tablist" aria-label="Dettaglio">
-      <button role="tab" id="tab-mese" data-tab="mese">Il mese in numeri</button>
-      <button role="tab" id="tab-vendite" data-tab="vendite">Contratti</button>
-      <button role="tab" id="tab-fi" data-tab="fi">Finanziamenti e assicurazioni</button>
-      <button role="tab" id="tab-usato" data-tab="usato">Usato</button>
-      <button role="tab" id="tab-simula" data-tab="simula">Simula</button>
-      <button role="tab" id="tab-segnali" data-tab="segnali">Tutti i segnali</button>
-    </nav>
-
-    <!-- IL MESE IN NUMERI -->
-    <div class="cv-page" id="pagina-mese" role="tabpanel" aria-labelledby="tab-mese">
-      <div class="cv-cards">
-        <article class="cv-qcard cv-q-auto">
-          <div class="cv-qlabel"><i class="cv-dot"></i>Auto vendute</div>
-          <div class="cv-qbig"><span class="dash-skeleton" data-source="kpi" data-field="vetture" data-fmt="int">—</span></div>
-          <div class="cv-qref" id="q-auto-ref"></div>
-          <dl class="cv-qrows" id="q-auto-rows"></dl>
-        </article>
+  <!-- 2. Cosa ha portato margine e cosa no, e le due domande -->
+  <section class="cv-sec" aria-labelledby="titolo-dettagli">
+    <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine e cosa no</h2>
+    <div class="cv-dett">
+      <article class="cv-qcard">
+        <div class="cv-qlabel">Dal listino al margine del mese</div>
+        <div class="cv-ponte" id="ponte" role="img" aria-label="Come si passa dal margine di listino al margine totale"></div>
+      </article>
+      <div class="cv-quote">
         <article class="cv-qcard cv-q-fin">
-          <div class="cv-qlabel"><i class="cv-dot"></i>Finanziamenti</div>
-          <div class="cv-qbig"><span class="dash-skeleton" data-source="kpi" data-field="fin_n" data-fmt="int">—</span><small id="q-fin-unit"></small></div>
+          <div class="cv-qlabel"><i class="cv-dot"></i>Auto con finanziamento</div>
+          <div class="cv-qbig" id="q-fin">—</div>
           <div class="cv-qref" id="q-fin-ref"></div>
           <dl class="cv-qrows" id="q-fin-rows"></dl>
         </article>
         <article class="cv-qcard cv-q-ass">
-          <div class="cv-qlabel"><i class="cv-dot"></i>Assicurazioni</div>
-          <div class="cv-qbig"><span class="dash-skeleton" data-source="kpi" data-field="ass_n" data-fmt="int">—</span><small id="q-ass-unit"></small></div>
+          <div class="cv-qlabel"><i class="cv-dot"></i>Auto con polizza</div>
+          <div class="cv-qbig" id="q-ass">—</div>
           <div class="cv-qref" id="q-ass-ref"></div>
           <dl class="cv-qrows" id="q-ass-rows"></dl>
         </article>
-        <article class="cv-qcard cv-q-tot">
-          <div class="cv-qlabel">Margine totale</div>
-          <div class="cv-qbig"><span class="dash-skeleton" data-source="kpi" data-field="margine_totale" data-fmt="eur">—</span></div>
-          <div class="cv-qref" id="q-tot-ref"></div>
-          <div class="cv-qbar" id="q-tot-bar" aria-hidden="true"></div>
-          <dl class="cv-qrows" id="q-tot-rows"></dl>
-        </article>
       </div>
-      <article class="cv-card" id="card-brand">
-        <div class="cv-card-head"><h3>Per brand</h3></div>
-        <p class="cv-note">Tocca un brand per vedere solo i suoi numeri.</p>
-        <div class="cv-tablebox">
-          <table class="cv-table" id="tab-brand" data-source="kpi" data-row-key="chiave">
-            <thead><tr>
-              <th data-field="brand">Brand</th>
-              <th class="num" data-field="vetture">Auto</th>
-              <th class="num cv-hide-sm" data-field="margine_veicolo">Margine auto</th>
-              <th class="num cv-hide-sm" data-field="margine_fi">Finanz. e assic.</th>
-              <th class="num" data-field="margine_totale">Totale</th>
-              <th class="num" data-field="margine_medio">Per auto</th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="cv-note" id="nota-sconto"></p>
-      </article>
     </div>
+    <div class="cv-domande">
+      <div class="cv-domanda">
+        <h3 class="cv-h3">Dove potevi guadagnare di più</h3>
+        <p class="cv-note">Sconti oltre la media e auto vendute sotto costo. Tocca una voce per il perché e cosa cambiare.</p>
+        <ol class="cv-azioni" id="d-margine"></ol>
+      </div>
+      <div class="cv-domanda">
+        <h3 class="cv-h3">Dove potevi vendere di più</h3>
+        <p class="cv-note">Finanziamenti e polizze proposti meno dei colleghi. Tocca una voce per il perché e cosa cambiare.</p>
+        <ol class="cv-azioni" id="d-vendite"></ol>
+      </div>
+    </div>
+    <p class="cv-note">Quanto puoi recuperare al mese, stimato e arrotondato: i valori in parte si sovrappongono. Regole di esempio, con soglie da tarare sui dati della concessionaria.</p>
+  </section>
 
-    <!-- CONTRATTI -->
-    <div class="cv-page" id="pagina-vendite" role="tabpanel" aria-labelledby="tab-vendite" hidden>
-      <div class="cv-toolbar">
-        <div class="cv-day">
-          <button class="cv-iconbtn" id="btn-prev" aria-label="Giorno precedente">‹</button>
-          <select class="cv-select" id="sel-giorno" aria-label="Giorno" data-source="contratti"></select>
-          <button class="cv-iconbtn" id="btn-next" aria-label="Giorno successivo">›</button>
+  <!-- 3. Per approfondire: simulatore, andamento per mese, venditori -->
+  <section class="cv-sec cv-terza" aria-labelledby="titolo-approfondire">
+    <h2 class="cv-h2" id="titolo-approfondire">Per approfondire</h2>
+
+    <article class="cv-card" id="sez-simula">
+      <div class="cv-card-head"><h3>Simulatore</h3></div>
+      <p class="cv-lead" id="sim-intro"></p>
+      <div class="cv-sim">
+        <div class="cv-qcard cv-sim-leve">
+          <div class="cv-sim-scenari" id="sim-scenari" role="group" aria-label="Scenari pronti"></div>
+          <div class="cv-sim-lista" id="sim-leve"></div>
+          <p class="cv-note">Ogni cursore cambia solo il suo numero: il simulatore non stima, per esempio, quante vendite perderesti facendo meno sconto.</p>
         </div>
-        <div class="cv-seg" role="group" aria-label="Periodo" id="seg-vista">
-          <button data-vista="giorno">Giorno</button>
-          <button data-vista="mtd">Mese fino a questo giorno</button>
+        <div class="cv-qcard cv-q-tot cv-sim-esito" aria-live="polite">
+          <div class="cv-qlabel">In un mese ti resterebbero</div>
+          <div class="cv-qbig"><span id="sim-resta">—</span></div>
+          <div class="cv-qref" id="sim-oggi"></div>
+          <p class="cv-sim-delta" id="sim-delta"></p>
+          <dl class="cv-qrows" id="sim-righe"></dl>
+          <div class="cv-sim-note" id="sim-note"></div>
         </div>
       </div>
-      <article class="cv-card" id="card-contratti">
-        <div class="cv-card-head">
-          <h3 id="titolo-contratti">Contratti</h3>
-          <button type="button" class="cv-chip cv-bad" id="chip-negativi" aria-pressed="false" hidden><span data-field="neg_veicolo"></span>&nbsp;<span id="chip-negativi-txt"></span></button>
-        </div>
-        <p class="cv-note">Tocca un contratto per vedere tutte le voci. <a href="data/contratti_gestionale.csv" download>Scarica i contratti (CSV)</a></p>
-        <input class="cv-search" id="cerca-contratti" type="search" placeholder="Cerca modello, venditore o numero" aria-label="Cerca nei contratti">
-        <div class="cv-tablebox">
-          <table class="cv-table" id="tab-contratti" data-source="contratti" data-row-key="contratto">
-            <thead><tr>
-              <th class="cv-hide-sm" data-field="contratto"><button data-sort="contratto">Contratto</button></th>
-              <th data-field="modello"><button data-sort="modello">Auto</button></th>
-              <th class="cv-hide-sm" data-field="venditore"><button data-sort="venditore">Venditore</button></th>
-              <th class="num cv-hide-sm" data-field="prezzo_listino"><button data-sort="prezzo_listino">Listino</button></th>
-              <th class="num cv-hide-sm" data-field="sconto"><button data-sort="sconto">Sconto</button></th>
-              <th class="num" data-source="margini" data-field="margine_veicolo"><button data-sort="margine_veicolo">Margine auto</button></th>
-              <th class="num cv-hide-sm" data-source="margini" data-field="margine_fi"><button data-sort="margine_fi">Finanz. e assic.</button></th>
-              <th class="num" data-source="margini" data-field="margine_totale"><button data-sort="margine_totale">Totale</button></th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="cv-detail" id="dettaglio" hidden></div>
-      </article>
-    </div>
+    </article>
 
-    <!-- FINANZIAMENTI E ASSICURAZIONI -->
-    <div class="cv-page" id="pagina-fi" role="tabpanel" aria-labelledby="tab-fi" hidden>
-      <div class="cv-kpis">
-        <div class="cv-kpi"><div class="cv-kpi-label">Margine da finanziamenti e assicurazioni</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="margine_fi" data-fmt="eur">—</div><div class="cv-kpi-delta">già tolta la parte dei venditori</div></div>
-        <div class="cv-kpi"><div class="cv-kpi-label">Per ogni auto venduta</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="fi_per_vettura" data-fmt="eur">—</div><div class="cv-kpi-delta">in media</div></div>
-        <div class="cv-kpi"><div class="cv-kpi-label">Quota del margine totale</div><div class="cv-kpi-value dash-skeleton" data-source="kpi" data-field="quota_fi" data-fmt="pct">—</div><div class="cv-kpi-delta">il resto viene dalla vendita delle auto</div></div>
+    <article class="cv-card" id="card-trend">
+      <div class="cv-card-head">
+        <h3>Andamento per mese</h3>
+        <div class="cv-seg cv-small" role="group" aria-label="Numero da vedere" id="seg-trend">
+          <button data-misura="fatturato_netto">Fatturato</button>
+          <button data-misura="margine_totale">Margine</button>
+          <button data-misura="margine_medio">Per contratto</button>
+          <button data-misura="vetture">Contratti</button>
+        </div>
       </div>
-      <div class="cv-grid">
-        <article class="cv-card" id="card-finanziamenti">
-          <div class="cv-card-head"><h3>Finanziamenti</h3></div>
-          <div class="cv-tablebox">
-            <table class="cv-table" id="tab-fin" data-source="fi_mix" data-row-key="chiave">
-              <thead><tr>
-                <th data-field="tipo">Tipo</th>
-                <th class="num" data-field="contratti">Quanti</th>
-                <th class="num cv-hide-sm" data-field="importo">Finanziato</th>
-                <th class="num cv-hide-sm" data-field="tasso_medio">Tasso medio</th>
-                <th class="num" data-field="provvigioni_rappel">Ti hanno reso</th>
-              </tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <p class="cv-note">"Ti hanno reso" somma provvigioni e premi della finanziaria. Il noleggio a lungo termine non ha tasso.</p>
-        </article>
-        <article class="cv-card" id="card-assicurazioni">
-          <div class="cv-card-head"><h3>Assicurazioni</h3></div>
-          <div class="cv-tablebox">
-            <table class="cv-table" id="tab-ass" data-source="fi_mix" data-row-key="chiave">
-              <thead><tr>
-                <th data-field="tipo">Tipo</th>
-                <th class="num" data-field="contratti">Polizze</th>
-                <th class="num cv-hide-sm" data-field="importo">Premi</th>
-                <th class="num" data-field="provvigioni_rappel">Ti hanno reso</th>
-              </tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </article>
+      <div class="cv-trendbox" id="trend"></div>
+      <p class="cv-note" id="trend-nota"></p>
+    </article>
+
+    <article class="cv-card" id="card-venditori">
+      <div class="cv-card-head"><h3 id="titolo-venditori">Venditori</h3></div>
+      <p class="cv-note">Ordinati per margine. In rosso i numeri che hanno fatto scattare una regola.</p>
+      <div class="cv-tablebox">
+        <table class="cv-table" id="tab-venditori">
+          <thead><tr>
+            <th>Venditore</th>
+            <th class="num">Contratti</th>
+            <th class="num cv-hide-sm">Fatturato</th>
+            <th class="num">Margine</th>
+            <th class="num cv-hide-sm">Per contratto</th>
+            <th class="num cv-hide-sm">Sconto medio</th>
+            <th class="num cv-hide-sm">Con finanz.</th>
+            <th class="num cv-hide-sm">Con polizza</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
-      <article class="cv-card" id="card-venditori">
-        <div class="cv-card-head"><h3>Venditori</h3></div>
-        <div class="cv-tablebox">
-          <table class="cv-table" id="tab-venditori" data-source="venditori" data-row-key="chiave">
-            <thead><tr>
-              <th data-field="venditore">Venditore</th>
-              <th class="num" data-field="vetture">Auto</th>
-              <th class="num" data-field="margine_totale">Margine</th>
-              <th class="num cv-hide-sm" data-field="margine_medio">Per auto</th>
-              <th class="num cv-hide-sm" data-field="pen_fin">Con finanz.</th>
-              <th class="num cv-hide-sm" data-field="pen_ass">Con polizza</th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </div>
-
-    <!-- USATO -->
-    <div class="cv-page" id="pagina-usato" role="tabpanel" aria-labelledby="tab-usato" hidden>
-      <div class="cv-kpis">
-        <div class="cv-kpi"><div class="cv-kpi-label">Usati in piazzale</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="permute" data-fmt="int" data-fascia="Totale">—</div><div class="cv-kpi-delta">ritirati in permuta, non ancora venduti</div></div>
-        <div class="cv-kpi"><div class="cv-kpi-label">Valore in piazzale</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="costo_stock" data-fmt="eur" data-fascia="Totale">—</div><div class="cv-kpi-delta">quanto li hai pagati, più il ripristino</div></div>
-        <div class="cv-kpi"><div class="cv-kpi-label">Interessi già pagati</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="interessi_passivi" data-fmt="eur" data-fascia="Totale">—</div><div class="cv-kpi-delta">da quando sono entrati</div></div>
-        <div class="cv-kpi"><div class="cv-kpi-label">Fermi in media da</div><div class="cv-kpi-value dash-skeleton" data-source="usato" data-field="giorni_medi" data-fmt="giorni" data-fascia="Totale">—</div><div class="cv-kpi-delta">dal ritiro in permuta</div></div>
-      </div>
-      <article class="cv-card" id="card-aging">
-        <div class="cv-card-head"><h3>Da quanto sono fermi</h3><span class="cv-chip" id="chip-situazione"></span></div>
-        <p class="cv-note">Dopo 2 mesi gli interessi cominciano a mangiarsi il guadagno sull'usato.</p>
-        <div class="cv-aging" id="barra-aging" data-source="usato"></div>
-        <div class="cv-legend" id="legenda-aging"></div>
-      </article>
-      <article class="cv-card" id="card-stock">
-        <div class="cv-card-head"><h3>Usati in piazzale, dal più vecchio</h3></div>
-        <div class="cv-tablebox">
-          <table class="cv-table" id="tab-stock" data-source="contratti" data-row-key="contratto">
-            <thead><tr>
-              <th data-field="permuta_modello">Auto</th>
-              <th class="cv-hide-sm" data-field="permuta_data_giacenza">Entrata il</th>
-              <th class="num" data-field="permuta_giorni_giacenza">Ferma da</th>
-              <th class="num cv-hide-sm" data-field="permuta_costo_stock">Valore</th>
-              <th class="num" data-field="permuta_interessi_passivi">Interessi</th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </div>
-
-    <!-- SIMULA -->
-    <div class="cv-page" id="pagina-simula" role="tabpanel" aria-labelledby="tab-simula" hidden>
-      <section class="cv-sec" id="sez-simula" aria-label="Simulatore">
-        <p class="cv-lead" id="sim-intro"></p>
-        <div class="cv-sim">
-          <div class="cv-qcard cv-sim-leve">
-            <div class="cv-sim-scenari" id="sim-scenari" role="group" aria-label="Scenari pronti"></div>
-            <div class="cv-sim-lista" id="sim-leve"></div>
-            <p class="cv-note">Ogni cursore cambia solo il suo numero: il simulatore non stima, per esempio, quante vendite perderesti facendo meno sconto.</p>
-          </div>
-          <div class="cv-qcard cv-q-tot cv-sim-esito" aria-live="polite">
-            <div class="cv-qlabel">In un mese ti resterebbero</div>
-            <div class="cv-qbig"><span id="sim-resta">—</span></div>
-            <div class="cv-qref" id="sim-oggi"></div>
-            <p class="cv-sim-delta" id="sim-delta"></p>
-            <dl class="cv-qrows" id="sim-righe"></dl>
-            <div class="cv-sim-note" id="sim-note"></div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- TUTTI I SEGNALI -->
-    <div class="cv-page" id="pagina-segnali" role="tabpanel" aria-labelledby="tab-segnali" hidden>
-      <section class="cv-sec" id="sez-analisi" aria-label="Tutti i segnali">
-        <div class="cv-an-barra">
-          <select class="cv-select" id="an-periodo" aria-label="Periodo da analizzare"></select>
-          <span class="cv-note" id="an-confronto"></span>
-        </div>
-        <div class="cv-an-esito" id="an-esito" aria-live="polite">
-          <p class="cv-an-sintesi" id="an-sintesi"></p>
-          <div class="cv-an-proposte" id="an-proposte"></div>
-          <details class="cv-more" id="an-altri"><summary id="an-altri-titolo">Altri segnali</summary><ul class="cv-an-lista" id="an-altri-lista"></ul></details>
-          <details class="cv-more" id="an-rischi"><summary id="an-rischi-titolo">Rischi da tenere d'occhio</summary><ul class="cv-an-lista" id="an-rischi-lista"></ul></details>
-          <div class="cv-an-limiti">
-            <p class="cv-qlabel">Cosa non posso dire con questi dati</p>
-            <ul id="an-limiti"></ul>
-          </div>
-          <p class="cv-note">Lettura automatica con regole fisse, versione dimostrativa: ogni proposta indica la regola da cui nasce e quanto fidarsi. Le soglie sono un primo esempio, da tarare sui dati della concessionaria.</p>
-        </div>
-      </section>
-    </div>
-  </details>
+    </article>
+  </section>
 
 </div>
   <footer class="piede">
@@ -313,8 +151,9 @@
   </footer>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<script src="data/contratti.js?v=20261020f"></script>
-<script src="assets/dash.js?v=20261020f"></script>
-<script src="assets/app.js?v=20261020f"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="data/contratti.js?v=20261021b"></script>
+<script src="assets/dash.js?v=20261021b"></script>
+<script src="assets/app.js?v=20261021b"></script>
 </body>
 </html>
