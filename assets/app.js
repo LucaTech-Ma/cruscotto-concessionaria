@@ -897,20 +897,23 @@ function scaricaReport() {
     doc.text(righeT, x, y + size * 0.3);
     y += h + 1.5;
   };
-  const titolo = (s, size = 12.5) => { spazio(14); y += 4; font(size, 'bold'); scrivi(s, M, y); y += 2.5; doc.setDrawColor(...LINE); doc.line(M, y, M + CW, y); y += 5; };
-  const sottotitolo = (s) => { spazio(10); y += 1.5; font(10, 'bold'); scrivi(s, M, y); y += 4.5; };
+  const titolo = (s, size = 12.5) => { spazio(22); y += 7; font(size, 'bold'); scrivi(s, M, y); y += 2.5; doc.setDrawColor(...LINE); doc.line(M, y, M + CW, y); y += 5.5; };
+  // Il sottotitolo non resta mai da solo in fondo alla pagina: con lui vanno almeno la lettura e due barre
+  const sottotitolo = (s) => { spazio(34); y += 5; font(10.5, 'bold'); scrivi(s, M, y); y += 5; };
+  const altezza = (s, w, size) => doc.splitTextToSize(pdfTxt(s), w).length * size * 0.42 + 1.5;
   const prima = mesePrima(fine);
-  // Barre orizzontali: nome, barra in proporzione, valore e dettaglio a destra
+  // Barre orizzontali su due righe: sopra nome, barra e valore; sotto, in piccolo, il dettaglio
+  const BARRA_X = M + 58, BARRA_W = 82;
   const barrePdf = (voci, totale, coloreDi) => {
     const max = Math.max(1, ...voci.map((v) => Math.abs(v.valore)));
     voci.forEach((v) => {
-      spazio(6.5);
-      font(9, 'normal', INK); scrivi(v.nome, M, y + 3.4);
+      spazio(11);
+      font(9.5, 'normal', INK); scrivi(v.nome, M, y + 3.4);
       doc.setFillColor(...coloreDi(v));
-      doc.rect(M + 42, y + 0.8, Math.max(0.6, (Math.max(0, v.valore) / max) * 70), 3.8, 'F');
-      font(9, 'bold', v.valore < 0 ? BAD : INK); scrivi(eur(v.valore), M + 136, y + 3.4, { align: 'right' });
-      font(8, 'normal', MUTED); scrivi(v.dettaglio, M + CW, y + 3.4, { align: 'right' });
-      y += 6.2;
+      doc.rect(BARRA_X, y + 0.6, Math.max(0.6, (Math.max(0, v.valore) / max) * BARRA_W), 3.8, 'F');
+      font(9.5, 'bold', v.valore < 0 ? BAD : INK); scrivi(eur(v.valore), M + CW, y + 3.4, { align: 'right' });
+      font(8, 'normal', MUTED); scrivi(v.dettaglio, M, y + 7.6);
+      y += 10.8;
     });
   };
   const lettura = (righeL) => (righeL || []).forEach((parti) => paragrafo(testoDi(parti), M, CW, 9, INK));
@@ -943,7 +946,7 @@ function scaricaReport() {
   if (parti.marchi && parti.marchi.length) {
     sottotitolo('Per marchio'); lettura(parti.letture.marchi); barrePdf(daParti(parti.marchi, parti.totM), parti.totM, coloreMarchio);
     sottotitolo('Per modello'); lettura(parti.letture.modelli); barrePdf(daParti(parti.modelli.slice(0, MAX_MODELLI), parti.totS), parti.totS, coloreMarchio);
-    if (parti.modelli.length > MAX_MODELLI) paragrafo($('#altri-modelli').textContent, M, CW, 8);
+    if (parti.modelli.length > MAX_MODELLI) { y += 0.5; paragrafo($('#altri-modelli').textContent, M, CW, 8); }
     sottotitolo('Per venditore'); lettura(parti.letture.venditori); barrePdf(daParti(parti.venditori, parti.totS), parti.totS, coloreMarchio);
   }
 
@@ -952,7 +955,8 @@ function scaricaReport() {
     titolo(nome);
     if (!lista.length) { paragrafo(vuota, M, CW); return; }
     lista.forEach((s, i) => {
-      spazio(16);
+      // Ogni voce resta intera sulla stessa pagina
+      spazio(8 + altezza(`${s.alert ? '' : `${s.titolo}. `}${testoDi(s.perche)}`, CW - 5, 9.5) + altezza(`Cosa cambiare: ${s.azione}`, CW - 5, 9.5) + altezza('Regola', CW - 5, 8) + 2);
       font(10.5, 'bold', s.alert ? WARN : INK); scrivi(`${i + 1}. ${s.alert ? 'ALERT · ' : ''}${titoloAzione(s)}`, M, y + 3.5);
       font(10.5, 'bold', OK); scrivi(`${piuEuro(s.valore)} al mese`, M + CW, y + 3.5, { align: 'right' });
       y += 6.5;
@@ -967,7 +971,7 @@ function scaricaReport() {
   paragrafo('Stime al mese, arrotondate: i valori in parte si sovrappongono. Regole di esempio, con soglie da tarare sui dati della concessionaria.', M, CW, 8);
 
   // Venditori: la tabella resta tutta sulla stessa pagina
-  spazio(18 + righeV.length * 5.5);
+  spazio(26 + righeV.length * 5.5);
   titolo('Venditori');
   const col = [
     ['Venditore', M, 'left'], ['Contratti', M + 62, 'right'], ['Fatturato', M + 88, 'right'], ['Margine', M + 110, 'right'],
