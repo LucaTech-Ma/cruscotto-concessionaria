@@ -2,8 +2,8 @@
 
 > **Validazione parziale.**
 > - ✅ **Validato** (2026-10-20): versione executive, nessun obiettivo suggerito, e i principi delle regole (stesso marchio, niente rumore).
-> - ✅ **Deciso da Luca** (2026-10-21): restano solo tre regole di esempio (SCO-01, FIN-02/ASS-02, VEN-01); le altre sono tolte.
-> - **⚠ NON VALIDATO:** le soglie delle tre regole (1,2 punti di sconto, 12 punti di finanziamenti o polizze, almeno 5 auto, test al 95%), la definizione di "sotto costo" (oggi comprende i bonus del brand legati agli obiettivi) e i comportamenti inseriti nei dati demo.
+> - ✅ **Deciso da Luca** (2026-10-21): restano solo tre regole di esempio (SCO-01, FIN-02/ASS-02, VEN-01); le altre sono tolte. Aggiunto un alert sui venditori con poche vendite (VOL-01), insieme a quelli su finanziamenti e polizze.
+> - **⚠ NON VALIDATO:** le soglie delle regole (1,2 punti di sconto, 12 punti di finanziamenti o polizze, almeno 5 auto, test al 95%; per VOL-01 il 60% della media dei colleghi con almeno 5 contratti di media), la definizione di "sotto costo" (oggi comprende i bonus del brand legati agli obiettivi) e i comportamenti inseriti nei dati demo.
 
 Demo di una webapp per concessionari multimarca: ogni sera i contratti della giornata arrivano dal gestionale e il cruscotto mostra vendite, margini, F&I e usato da permute.
 
@@ -14,23 +14,24 @@ I dati sono **fittizi ma verosimili**: 674 contratti Jeep, BYD e Volkswagen, dal
 Versione executive in tre sezioni (decisa da Luca il 21/10/2026). Regola: **per un executive meno rumore è meglio**. Quattro numeri, due domande con cosa cambiare, il resto in fondo. Si legge per mese e per marchio, scelti in alto.
 
 1. **I numeri chiave**: fatturato, margine, margine per contratto e numero di contratti, ognuno confrontato con il mese prima allo stesso giorno.
-2. **Cosa ha portato margine e cosa no**:
-   - *dal listino al margine del mese*: un grafico a ponte, dal margine di listino (listino meno costo d'acquisto) al margine totale, passando per sconti, contributi e bonus del brand, preparazione e trasporto, finanziamenti e polizze;
-   - *quota di auto con finanziamento e con polizza*, con il margine per pratica;
-   - *le due domande*: **dove potevi guadagnare di più** (regole SCO-01 e VEN-01) e **dove potevi vendere di più** (regole FIN-02 e ASS-02). Ogni voce dice quanto vale in euro al mese, arrotondato a due cifre significative perché è una stima; toccandola si aprono il perché, cosa cambiare, il pulsante "Simula questa azione", la regola e l'affidabilità.
+2. **Cosa ha portato margine** (rivista il 21/10/2026):
+   - *le tre fonti di margine*: vendita delle auto, finanziamenti, assicurazioni, con quota del totale, margine per contratto (per auto, per pratica, per polizza), quota di contratti con finanziamento o polizza e confronto con il mese prima;
+   - *le ripartizioni del margine totale* per marchio (sempre tutti e tre, quello scelto evidenziato), per modello (i primi 6, gli altri in una riga) e per venditore, ognuna con una frase di lettura in cima: chi pesa di più e chi rende di più o di meno a contratto;
+   - *le due domande*: **dove potevi guadagnare di più** (regole SCO-01 e VEN-01) e **dove potevi vendere di più**, con un **alert per venditore** che raccoglie pochi finanziamenti (FIN-02), poche polizze (ASS-02) e poche vendite (VOL-01). Ogni voce dice quanto vale in euro al mese, arrotondato a due cifre significative perché è una stima; toccandola si aprono il perché, cosa cambiare, il pulsante "Simula questa azione", la regola e l'affidabilità.
 3. **Per approfondire**: il simulatore, l'andamento per mese (fatturato, margine, margine per contratto o contratti; il mese scelto è evidenziato, quello in corso è più chiaro) e il report sui venditori, con in rosso i numeri che hanno fatto scattare una regola.
 
-**Report PDF**: il pulsante "Scarica il report PDF" crea un file di due pagine con gli stessi contenuti delle prime due sezioni e la tabella dei venditori, per il mese e il marchio scelti. Serve la connessione a internet (libreria jsPDF).
+**Report PDF**: il pulsante "Scarica il report PDF" crea un file con gli stessi contenuti delle prime due sezioni (fonti di margine, ripartizioni con le frasi di lettura, le due domande con gli alert) e la tabella dei venditori, per il mese e il marchio scelti. Serve la connessione a internet (libreria jsPDF).
 
 Fino al 20/10/2026 c'erano anche la barra dell'obiettivo del mese, la sezione "Approfondisci" con sei schede (contratti, finanziamenti e assicurazioni per tipo, usato, tutti i segnali) e i collegamenti `#segnali`, `#vendite` ecc.: sono stati tolti il 21/10 e restano nella storia del repository.
 
-   Le regole sono tre, di esempio (decisione di Luca del 21/10/2026), con soglie da tarare sui dati reali:
+   Le regole sono quattro, di esempio (decisioni di Luca del 21/10/2026), con soglie da tarare sui dati reali:
 
    | Codice | Tipo | Quando scatta |
    |---|---|---|
    | SCO-01 | Fuori dalla norma | Un venditore concede almeno 1,2 punti di sconto in più dei colleghi dello stesso marchio |
    | FIN-02, ASS-02 | Fuori dalla norma | Un venditore ha almeno 12 punti in meno di finanziamenti (o polizze) dei colleghi dello stesso marchio |
    | VEN-01 | Regola violata | Auto vendute sotto costo |
+   | VOL-01 | Fuori dalla norma | Un venditore chiude al massimo il 60% della media dei colleghi dello stesso marchio, se i colleghi ne chiudono almeno 5 (aggiunta il 21/10) |
 
    Fino al 20/10 c'erano anche regole su peggioramenti rispetto al periodo precedente, modelli poco redditizi, sconti alti senza finanziamento, usato fermo e rischi di concentrazione: sono state tolte il 21/10 e restano nella storia del repository.
 

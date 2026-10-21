@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=20261021b">
+<link rel="stylesheet" href="assets/style.css?v=20261021c">
 </head>
 <body>
 <main class="wrap" id="dash-root">
@@ -47,28 +47,31 @@
     </div>
   </section>
 
-  <!-- 2. Cosa ha portato margine e cosa no, e le due domande -->
+  <!-- 2. Cosa ha portato margine, e le due domande -->
   <section class="cv-sec" aria-labelledby="titolo-dettagli">
-    <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine e cosa no</h2>
-    <div class="cv-dett">
-      <article class="cv-qcard">
-        <div class="cv-qlabel">Dal listino al margine del mese</div>
-        <div class="cv-ponte" id="ponte" role="img" aria-label="Come si passa dal margine di listino al margine totale"></div>
+    <div>
+      <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine</h2>
+      <p class="cv-note">Da dove viene il margine del mese, e come si divide tra marchi, modelli e venditori.</p>
+    </div>
+    <div class="cv-mix" id="fonti-barra" aria-hidden="true"></div>
+    <div class="cv-fonti" id="fonti"></div>
+    <div class="cv-split">
+      <article class="cv-qcard cv-splitcard">
+        <div class="cv-qlabel">Per marchio</div>
+        <div class="cv-insight" id="ins-marchi"></div>
+        <div class="cv-barre" id="split-marchi"></div>
       </article>
-      <div class="cv-quote">
-        <article class="cv-qcard cv-q-fin">
-          <div class="cv-qlabel"><i class="cv-dot"></i>Auto con finanziamento</div>
-          <div class="cv-qbig" id="q-fin">—</div>
-          <div class="cv-qref" id="q-fin-ref"></div>
-          <dl class="cv-qrows" id="q-fin-rows"></dl>
-        </article>
-        <article class="cv-qcard cv-q-ass">
-          <div class="cv-qlabel"><i class="cv-dot"></i>Auto con polizza</div>
-          <div class="cv-qbig" id="q-ass">—</div>
-          <div class="cv-qref" id="q-ass-ref"></div>
-          <dl class="cv-qrows" id="q-ass-rows"></dl>
-        </article>
-      </div>
+      <article class="cv-qcard cv-splitcard">
+        <div class="cv-qlabel">Per modello</div>
+        <div class="cv-insight" id="ins-modelli"></div>
+        <div class="cv-barre" id="split-modelli"></div>
+        <p class="cv-note" id="altri-modelli"></p>
+      </article>
+      <article class="cv-qcard cv-splitcard">
+        <div class="cv-qlabel">Per venditore</div>
+        <div class="cv-insight" id="ins-venditori"></div>
+        <div class="cv-barre" id="split-venditori"></div>
+      </article>
     </div>
     <div class="cv-domande">
       <div class="cv-domanda">
@@ -78,7 +81,7 @@
       </div>
       <div class="cv-domanda">
         <h3 class="cv-h3">Dove potevi vendere di più</h3>
-        <p class="cv-note">Finanziamenti e polizze proposti meno dei colleghi. Tocca una voce per il perché e cosa cambiare.</p>
+        <p class="cv-note">Alert sui venditori con meno finanziamenti o polizze dei colleghi, o con poche vendite. Tocca una voce per il perché e cosa cambiare.</p>
         <ol class="cv-azioni" id="d-vendite"></ol>
       </div>
     </div>
@@ -152,8 +155,8 @@
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="data/contratti.js?v=20261021b"></script>
-<script src="assets/dash.js?v=20261021b"></script>
-<script src="assets/app.js?v=20261021b"></script>
+<script src="data/contratti.js?v=20261021c"></script>
+<script src="assets/dash.js?v=20261021c"></script>
+<script src="assets/app.js?v=20261021c"></script>
 </body>
 </html>

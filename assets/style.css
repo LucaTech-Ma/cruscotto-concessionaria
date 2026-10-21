@@ -354,15 +354,7 @@ button.cv-chip[aria-pressed="true"] { background: var(--color-bad); border-color
    Per un executive meno rumore è meglio: quattro numeri e due domande, il resto in fondo. */
 .cv-quattro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 900px) { .cv-quattro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.cv-dett { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.cv-quote { display: grid; gap: 14px; }
-.cv-quote .cv-qbig { font-size: clamp(1.8rem, 3vw, 2.3rem); }
-@media (max-width: 900px) { .cv-dett { grid-template-columns: minmax(0, 1fr); } .cv-quote { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .cv-quote { grid-template-columns: minmax(0, 1fr); } }
-.cv-ponte { min-width: 0; margin-top: 8px; }
-.cv-ponte svg, .cv-trendbox svg { display: block; max-width: 100%; height: auto; }
-.cv-ponte text { font-family: var(--font-sans); font-size: 13px; fill: var(--color-fg-muted); }
-.cv-ponte text.cv-ponte-tot { fill: var(--color-fg); font-weight: 700; }
+.cv-trendbox svg { display: block; max-width: 100%; height: auto; }
 .cv-domande { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; align-items: start; }
 @media (max-width: 900px) { .cv-domande { grid-template-columns: minmax(0, 1fr); } }
 .cv-domanda { display: grid; gap: 8px; align-content: start; min-width: 0; }
@@ -375,3 +367,29 @@ button.cv-chip[aria-pressed="true"] { background: var(--color-bad); border-color
 .cv-trendbox text.cv-trend-nota { font-size: 11px; }
 .cv-pdf { margin-left: auto; }
 @media (max-width: 640px) { .cv-pdf { margin-left: 0; } }
+
+/* Cosa ha portato margine (21/10/2026): tre fonti, poi marchi, modelli e venditori con una frase di lettura */
+.cv-mix { display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; background: var(--cds-chart-grid); }
+.cv-mix span { display: block; height: 100%; }
+.cv-fonti { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.cv-fonte-val { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.cv-fonte-quota { font-size: 14px; color: var(--color-fg-muted); }
+.cv-fonte-quota b { color: var(--color-fg); }
+.cv-split { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+@media (max-width: 1000px) { .cv-split { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .cv-fonti { grid-template-columns: minmax(0, 1fr); } }
+.cv-splitcard { gap: 12px; }
+.cv-insight { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 14px; line-height: 1.45; }
+.cv-insight:empty { display: none; }
+.cv-insight p { margin: 0; }
+.cv-barre { display: grid; gap: 12px; }
+.cv-barra { display: grid; gap: 4px; }
+.cv-barra-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 14px; }
+.cv-barra-nome { font-weight: 600; min-width: 0; }
+.cv-barra-val { font-weight: 700; white-space: nowrap; }
+.cv-barra-traccia { height: 8px; border-radius: 4px; background: var(--cds-chart-grid); overflow: hidden; }
+.cv-barra-traccia i { display: block; height: 100%; border-radius: 4px; }
+.cv-barra-sub { font-size: 12.5px; color: var(--color-fg-muted); }
+.cv-barra-scelta { padding: 6px 8px; margin: -6px -8px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cv-az-alert { border-left: 4px solid var(--color-warn); }
+.cv-alert-chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-warn); background: color-mix(in srgb, var(--color-warn) 12%, transparent); padding: 2px 8px; border-radius: 999px; vertical-align: 2px; }
