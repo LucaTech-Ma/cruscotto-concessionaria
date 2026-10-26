@@ -609,9 +609,9 @@ function numeri(k, fine) {
 /* ---------- 2. Cosa ha portato margine ---------- */
 // Tre fonti di margine: vendita delle auto, finanziamenti, assicurazioni. Ognuna con quota, valore per contratto e confronto.
 const FONTI = [
-  { k: 'margine_veicolo', nome: 'Vendita delle auto', col: 'var(--mix-auto)', pdf: [59, 91, 143], n: 'vetture', per: 'Margine per auto', ref: 'ref_margine_veicolo' },
-  { k: 'margine_fin', nome: 'Finanziamenti', col: 'var(--mix-fin)', pdf: [227, 155, 46], n: 'fin_n', per: 'Margine per finanziamento', pen: 'pen_fin', ref: 'ref_margine_fin' },
-  { k: 'margine_ass', nome: 'Assicurazioni', col: 'var(--mix-ass)', pdf: [42, 157, 143], n: 'ass_n', per: 'Margine per polizza', pen: 'pen_ass', ref: 'ref_margine_ass' },
+  { k: 'margine_veicolo', nome: 'Vendita delle auto', col: 'var(--mix-auto)', pdf: [30, 58, 95], n: 'vetture', per: 'Margine per auto', ref: 'ref_margine_veicolo' },
+  { k: 'margine_fin', nome: 'Finanziamenti', col: 'var(--mix-fin)', pdf: [180, 83, 9], n: 'fin_n', per: 'Margine per finanziamento', pen: 'pen_fin', ref: 'ref_margine_fin' },
+  { k: 'margine_ass', nome: 'Assicurazioni', col: 'var(--mix-ass)', pdf: [168, 162, 158], n: 'ass_n', per: 'Margine per polizza', pen: 'pen_ass', ref: 'ref_margine_ass' },
 ];
 function fonti(k, fine) {
   const box = $('#fonti'), barra = $('#fonti-barra');
@@ -796,7 +796,7 @@ function trend(mappaKpi, brand, meseScelto) {
   add('line', { x1: 0, x2: W, y1: y(0), y2: y(0), stroke: 'var(--cds-chart-axis)', 'stroke-width': 1 });
   dati.forEach((d, i) => {
     const cx = slot * (i + 0.5), scelto = d.m === meseScelto;
-    const r = add('rect', { x: cx - bw / 2, y: y(d.v), width: bw, height: Math.max(1, y(0) - y(d.v)), rx: 4,
+    const r = add('rect', { x: cx - bw / 2, y: y(d.v), width: bw, height: Math.max(1, y(0) - y(d.v)), rx: 0,
       fill: scelto ? 'var(--mix-auto)' : 'var(--bar)', 'fill-opacity': d.parziale ? 0.55 : 1 });
     const tip = document.createElementNS(ns, 'title');
     tip.textContent = `${maiusc(meseDi(d.m))}${d.parziale ? ` fino al ${d.fino}` : ''}: ${T.f(d.v)}`;
@@ -875,7 +875,7 @@ function disegna() {
 /* ---------- Report PDF ---------- */
 // Lo stesso contenuto della schermata, per chi non apre il cruscotto: numeri, cosa ha portato margine, le due domande, i venditori.
 const pdfTxt = (s) => String(s).replace(/−/g, '-').replace(/[   ]/g, ' ');
-const RGB_MARCHI = { Jeep: [10, 138, 102], BYD: [192, 102, 155], Volkswagen: [0, 114, 178] };
+const RGB_MARCHI = { Jeep: [11, 93, 59], BYD: [214, 185, 140], Volkswagen: [91, 123, 168] };
 function scaricaReport() {
   const nota = $('#pdf-nota');
   if (!REPORT || !REPORT.k) { nota.textContent = 'I dati non sono ancora pronti.'; return; }
@@ -884,10 +884,13 @@ function scaricaReport() {
   const { k, gruppi, parti, righeV, segni, etichetta, marchio, fine, mese } = REPORT;
   const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
   const M = 16, CW = 210 - 2 * M, FONDO = 278;
-  const INK = [18, 33, 58], MUTED = [90, 101, 119], LINE = [232, 234, 239], OK = [29, 122, 76], BAD = [184, 53, 43], WARN = [163, 95, 0];
+  // Stile Executive Editorial: carta, inchiostro, serif per i titoli, mono per sovratitoli e intestazioni; niente rosso
+  const INK = [20, 20, 19], MUTED = [87, 83, 78], LINE = [231, 229, 228], OK = [11, 93, 59], BAD = [20, 20, 19], WARN = [180, 83, 9], CARTA = [250, 248, 245];
+  const carta = () => { doc.setFillColor(...CARTA); doc.rect(0, 0, 210, 297, 'F'); };
+  carta();
   let y = 18;
-  const font = (size, stile = 'normal', col = INK) => { doc.setFont('helvetica', stile); doc.setFontSize(size); doc.setTextColor(...col); };
-  const spazio = (h) => { if (y + h > FONDO) { doc.addPage(); y = 18; } };
+  const font = (size, stile = 'normal', col = INK, fam = 'helvetica') => { doc.setFont(fam, stile); doc.setFontSize(size); doc.setTextColor(...col); };
+  const spazio = (h) => { if (y + h > FONDO) { doc.addPage(); carta(); y = 18; } };
   const scrivi = (s, x, yy, opt) => doc.text(pdfTxt(s), x, yy, opt);
   const paragrafo = (s, x, w, size = 9.5, col = MUTED, stile = 'normal') => {
     font(size, stile, col);
@@ -897,9 +900,11 @@ function scaricaReport() {
     doc.text(righeT, x, y + size * 0.3);
     y += h + 1.5;
   };
-  const titolo = (s, size = 12.5) => { spazio(22); y += 7; font(size, 'bold'); scrivi(s, M, y); y += 2.5; doc.setDrawColor(...LINE); doc.line(M, y, M + CW, y); y += 5.5; };
+  const titolo = (s, size = 14) => { spazio(22); y += 6; doc.setDrawColor(...INK); doc.setLineWidth(0.6); doc.line(M, y, M + CW, y); doc.setLineWidth(0.2); y += 6.5; font(size, 'bold', INK, 'times'); scrivi(s, M, y); y += 6; };
   // Il sottotitolo non resta mai da solo in fondo alla pagina: con lui vanno almeno la lettura e due barre
-  const sottotitolo = (s) => { spazio(34); y += 5; font(10.5, 'bold'); scrivi(s, M, y); y += 5; };
+  const sottotitolo = (s) => { spazio(34); y += 5; font(8.5, 'bold', OK, 'courier'); scrivi(s.toUpperCase(), M, y); y += 5; };
+  // Valore critico: in inchiostro, grassetto, sottolineato in ambra
+  const sottolinea = (s, x, yy, a) => { const w = doc.getTextWidth(pdfTxt(s)); const x0 = a === 'right' ? x - w : x; doc.setDrawColor(...WARN); doc.setLineWidth(0.5); doc.line(x0, yy + 1, x0 + w, yy + 1); doc.setLineWidth(0.2); };
   const altezza = (s, w, size) => doc.splitTextToSize(pdfTxt(s), w).length * size * 0.42 + 1.5;
   const prima = mesePrima(fine);
   // Barre orizzontali su due righe: sopra nome, barra e valore; sotto, in piccolo, il dettaglio
@@ -911,7 +916,8 @@ function scaricaReport() {
       font(9.5, 'normal', INK); scrivi(v.nome, M, y + 3.4);
       doc.setFillColor(...coloreDi(v));
       doc.rect(BARRA_X, y + 0.6, Math.max(0.6, (Math.max(0, v.valore) / max) * BARRA_W), 3.8, 'F');
-      font(9.5, 'bold', v.valore < 0 ? BAD : INK); scrivi(eur(v.valore), M + CW, y + 3.4, { align: 'right' });
+      font(9.5, 'bold', INK); scrivi(eur(v.valore), M + CW, y + 3.4, { align: 'right' });
+      if (v.valore < 0) sottolinea(eur(v.valore), M + CW, y + 3.4, 'right');
       font(8, 'normal', MUTED); scrivi(v.dettaglio, M, y + 7.6);
       y += 10.8;
     });
@@ -919,7 +925,9 @@ function scaricaReport() {
   const lettura = (righeL) => (righeL || []).forEach((parti) => paragrafo(testoDi(parti), M, CW, 9, INK));
 
   // Testata
-  font(18, 'bold'); scrivi('Report del mese', M, y); y += 7;
+  font(8, 'normal', MUTED, 'courier'); scrivi('CONCESSIONARIA DEMO · REPORT DIREZIONALE', M, y); y += 2.5;
+  doc.setDrawColor(...INK); doc.setLineWidth(0.6); doc.line(M, y, M + CW, y); doc.setLineWidth(0.2); y += 9;
+  font(24, 'bold', INK, 'times'); scrivi('Report del mese', M, y); y += 7;
   font(10, 'normal', MUTED);
   scrivi(`Concessionaria Demo · ${etichetta} · ${marchio} · creato il ${fNumData.format(new Date())}`, M, y); y += 4.5;
   scrivi(`Confronto con ${prima} allo stesso giorno. Importi IVA esclusa. Dati di esempio.`, M, y); y += 8;
@@ -928,9 +936,10 @@ function scaricaReport() {
   const bw = (CW - 9) / 4;
   NUMERI.forEach(([, c, r, f, nome], i) => {
     const x = M + i * (bw + 3);
-    doc.setDrawColor(...LINE); doc.roundedRect(x, y, bw, 22, 2, 2);
-    font(8, 'normal', MUTED); scrivi(nome, x + 3, y + 5.5);
-    font(13, 'bold'); scrivi(f(k[c]), x + 3, y + 13);
+    doc.setFillColor(255, 255, 255); doc.setDrawColor(...LINE); doc.rect(x, y, bw, 22, 'FD');
+    doc.setDrawColor(...INK); doc.setLineWidth(0.6); doc.line(x, y, x + bw, y); doc.setLineWidth(0.2);
+    font(7, 'bold', OK, 'courier'); scrivi(nome.toUpperCase(), x + 3, y + 5.5);
+    font(14, 'bold', INK, 'times'); scrivi(f(k[c]), x + 3, y + 13);
     font(8, 'normal', MUTED); scrivi(vuoto(k[r]) ? '' : `${prima.slice(0, 3)}: ${f(k[r])}`, x + 3, y + 18.5);
   });
   y += 28;
@@ -957,7 +966,7 @@ function scaricaReport() {
     lista.forEach((s, i) => {
       // Ogni voce resta intera sulla stessa pagina
       spazio(8 + altezza(`${s.alert ? '' : `${s.titolo}. `}${testoDi(s.perche)}`, CW - 5, 9.5) + altezza(`Cosa cambiare: ${s.azione}`, CW - 5, 9.5) + altezza('Regola', CW - 5, 8) + 2);
-      font(10.5, 'bold', s.alert ? WARN : INK); scrivi(`${i + 1}. ${s.alert ? 'ALERT · ' : ''}${titoloAzione(s)}`, M, y + 3.5);
+      font(10.5, 'bold', s.alert ? WARN : INK, 'times'); scrivi(`${i + 1}. ${s.alert ? 'ALERT · ' : ''}${titoloAzione(s)}`, M, y + 3.5);
       font(10.5, 'bold', OK); scrivi(`${piuEuro(s.valore)} al mese`, M + CW, y + 3.5, { align: 'right' });
       y += 6.5;
       paragrafo(`${s.alert ? '' : `${s.titolo}. `}${testoDi(s.perche)}`, M + 5, CW - 5);
@@ -977,14 +986,14 @@ function scaricaReport() {
     ['Venditore', M, 'left'], ['Contratti', M + 62, 'right'], ['Fatturato', M + 88, 'right'], ['Margine', M + 110, 'right'],
     ['Per contr.', M + 130, 'right'], ['Sconto', M + 146, 'right'], ['Finanz.', M + 162, 'right'], ['Polizza', M + CW, 'right'],
   ];
-  font(8, 'bold', MUTED); col.forEach(([t, x, a]) => scrivi(t, x, y, { align: a })); y += 2; doc.line(M, y, M + CW, y); y += 4.5;
+  font(7.5, 'bold', MUTED, 'courier'); col.forEach(([t, x, a]) => scrivi(t.toUpperCase(), x, y, { align: a })); y += 2; doc.setDrawColor(41, 37, 36); doc.line(M, y, M + CW, y); y += 4.5;
   righeV.forEach((r) => {
     spazio(6);
     const s = segni.get(r.venditore) || [];
     const val = [r.venditore, num(r.vetture), eur(r.fatturato_netto), eur(r.margine_totale), eur(r.margine_medio),
       vuoto(r.sconto_medio_pct) ? '—' : fPct1.format(r.sconto_medio_pct), pct(r.pen_fin), pct(r.pen_ass)];
     const rosso = [false, s.includes('VOL-01'), false, r.margine_totale < 0, r.margine_medio < 0, s.includes('SCO-01'), s.includes('FIN-02'), s.includes('ASS-02')];
-    col.forEach(([, x, a], i) => { font(9, rosso[i] ? 'bold' : 'normal', rosso[i] ? BAD : INK); scrivi(val[i], x, y, { align: a }); });
+    col.forEach(([, x, a], i) => { font(9, rosso[i] ? 'bold' : 'normal', INK); scrivi(val[i], x, y, { align: a }); if (rosso[i]) sottolinea(val[i], x, y, a); });
     y += 5.5;
   });
   if (!righeV.length) paragrafo('Nessun contratto nel mese.', M, CW);
@@ -993,7 +1002,8 @@ function scaricaReport() {
   const pagine = doc.getNumberOfPages();
   for (let i = 1; i <= pagine; i++) {
     doc.setPage(i);
-    font(8, 'normal', MUTED);
+    doc.setDrawColor(...LINE); doc.line(M, 285, M + CW, 285);
+    font(7.5, 'normal', MUTED, 'courier');
     scrivi('Cruscotto concessionaria · dati di esempio · importi IVA esclusa', M, 290);
     scrivi(`${i} di ${pagine}`, M + CW, 290, { align: 'right' });
   }

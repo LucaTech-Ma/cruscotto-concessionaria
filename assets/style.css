@@ -1,7 +1,7 @@
 /* Layout: si legge come un messaggio di fine giornata, dall'alto in basso, una domanda per sezione.
    Prima la risposta in una frase, poi pochi numeri grandi, poi cosa controllare. Il dettaglio sta in fondo.
-   Stessa identità del sito: inchiostro blu, un solo accento ambra, IBM Plex Sans.
-   Tema unico chiaro, scelto apposta: lo sfondo resta bianco anche se il telefono è in modalità scura.
+   Prima: inchiostro blu, accento ambra, IBM Plex Sans. Dal 26/10/2026 lo stile "Executive Editorial" in fondo al file sovrascrive i token.
+   Tema unico chiaro, scelto apposta: lo sfondo resta chiaro anche se il telefono è in modalità scura.
    Fondo bianco, riquadri con bordo sottile e ombra leggera, testo grande: chi legge non è un analista.
    I numeri sono tutti in inchiostro; il colore resta solo dove distingue auto, finanziamenti e assicurazioni. */
 :root {
@@ -393,3 +393,103 @@ button.cv-chip[aria-pressed="true"] { background: var(--color-bad); border-color
 .cv-barra-scelta { padding: 6px 8px; margin: -6px -8px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .cv-az-alert { border-left: 4px solid var(--color-warn); }
 .cv-alert-chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-warn); background: color-mix(in srgb, var(--color-warn) 12%, transparent); padding: 2px 8px; border-radius: 999px; vertical-align: 2px; }
+
+/* ==========================================================================
+   Stile "Executive Editorial" di Luca (26/10/2026), lo stesso del Report Finanziamenti.
+   Carta e inchiostro, serif per titoli e grandi numeri, mono per sovratitoli e tabelle,
+   niente ombre né angoli arrotondati, filetto superiore sulle card, accento verde inglese.
+   Colori dei dati verificati per la distinguibilità (anche con alterazioni della visione):
+   fonti di margine blu Oxford, ambra, pietra; marchi verde (Jeep), sabbia (BYD), blu chiaro (Volkswagen).
+   Questo blocco sovrascrive quello sopra: la struttura della pagina non cambia.
+   ========================================================================== */
+:root {
+  --color-bg: #FAF8F5; --color-panel: #FFFFFF; --color-fg: #141413; --color-fg-muted: #57534E; --color-border-line: #E7E5E4;
+  --shadow: none; --color-ok: #0B5D3B; --color-warn: #B45309; --color-bad: #141413;
+  --accent: #0B5D3B; --accent-ink: #0B5D3B; --accent-soft: #F2EFE9;
+  --mix-auto: #1E3A5F; --mix-fin: #B45309; --mix-ass: #A8A29E; --bar: #D6D3D1;
+  --series-1: #0B5D3B; --series-2: #D6B98C; --series-3: #5B7BA8;
+  --cds-chart-grid: #E7E5E4; --cds-chart-axis: #D6D3D1; --cds-chart-reference: #78716C; --cds-chart-muted: #A8A29E;
+  --cds-surface-popover: #FFFFFF; --cds-border: #E7E5E4; --cds-text-secondary: #57534E; --cds-shadow-popover: none; --skeleton: #E7E5E4;
+  --cds-radius: 0;
+  --rule: #141413; --deep: #F2EFE9; --s800: #292524; --meta: #78716C;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+body { background: var(--color-bg); }
+
+/* Testata da rivista */
+.cv-mast-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 2px solid var(--rule); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--meta); }
+.cv-mast-h1 { margin: 0; font-family: var(--font-serif); font-weight: 700; font-size: clamp(2rem, 4.5vw, 2.7rem); letter-spacing: -.01em; line-height: 1.08; }
+.cv-dek { margin: 6px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 1.12rem; color: var(--color-fg-muted); max-width: 62ch; }
+.cv-tag { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); background: transparent; border: 1px solid var(--accent); border-radius: 2px; padding: 3px 8px; }
+.cv-kicker { margin: 0 0 4px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .15em; color: var(--accent); }
+.cv-toolbar { padding: 14px 0; border-top: 1px solid var(--color-border-line); border-bottom: 1px solid var(--color-border-line); }
+
+/* Titoli e numeri */
+.cv-h2 { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.15; }
+.cv-h3, .cv-card h3, .cv-an-titolo, .cv-detail-head h4 { font-family: var(--font-serif); font-weight: 600; font-size: 1.2rem; letter-spacing: -.005em; }
+.cv-tre-val, .cv-qbig, .cv-fonte-val, .cv-an-valore, .cv-goal-big, .cv-kpi-value, .cv-headline { font-family: var(--font-serif); font-weight: 600; letter-spacing: -.01em; }
+.cv-tre-label, .cv-qlabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .15em; color: var(--accent); }
+.cv-tre-ref, .cv-qref, .cv-fonte-quota, .cv-barra-sub, .cv-lever-foot, .cv-trend { font-family: var(--font-mono); font-size: 12px; }
+.cv-lead { font-family: var(--font-serif); font-style: italic; font-size: 1.05rem; }
+.cv-note { font-size: 13px; }
+
+/* Card piatte con filetto superiore */
+.cv-hero, .cv-todo, .cv-more, .cv-qcard, .cv-tre-item, .cv-az, .cv-kpi, .cv-card { border-radius: 0; box-shadow: none; border: 1px solid var(--color-border-line); border-top: 2px solid var(--rule); }
+.cv-q-tot { border: 1px solid var(--color-border-line); border-top: 2px solid var(--accent); }
+.cv-tre.cv-quattro { gap: 0; background: var(--color-panel); border: 1px solid var(--color-border-line); border-top: 2px solid var(--rule); }
+.cv-tre.cv-quattro .cv-tre-item { border: 0; border-right: 1px solid var(--color-border-line); padding: 18px 22px 20px; }
+.cv-tre.cv-quattro .cv-tre-item:last-child { border-right: 0; }
+@media (max-width: 900px) { .cv-tre.cv-quattro .cv-tre-item:nth-child(2) { border-right: 0; } .cv-tre.cv-quattro .cv-tre-item:nth-child(-n+2) { border-bottom: 1px solid var(--color-border-line); } }
+.cv-tre-val { font-size: clamp(2rem, 3.4vw, 2.6rem); }
+.cv-insight { border-radius: 0; background: var(--deep); border-left: 2px solid var(--accent); }
+.cv-tip { border-radius: 0; box-shadow: none; border-top: 2px solid var(--rule); }
+.cv-tip-row span:last-child { font-family: var(--font-mono); }
+.cv-an-vuoto { border-radius: 0; }
+.cv-barra-scelta { border-radius: 0; background: var(--deep); }
+
+/* Barre e indicatori squadrati */
+.cv-mix, .cv-mix span, .cv-qbar, .cv-barra-traccia, .cv-barra-traccia i, .cv-goal-bar, .cv-goal-fill, .cv-aging, .cv-bar i, .cv-sw, .cv-dot { border-radius: 0; }
+.cv-an-rank, .cv-todo-icon, .cv-more summary::before, .cv-deep-box > summary .cv-h2::before { border-radius: 0; background: var(--deep); color: var(--accent); }
+
+/* Comandi */
+.cv-select, .cv-search, .cv-iconbtn { border-radius: 0; border-color: #D6D3D1; }
+.cv-select:hover, .cv-search:hover { border-color: var(--rule); }
+.cv-seg { padding: 0; gap: 0; border-radius: 0; background: transparent; border: 1px solid var(--rule); }
+.cv-seg button { border-radius: 0; border-right: 1px solid var(--rule); color: var(--rule); font-size: 13px; font-weight: 600; transition: background-color .2s, color .2s; }
+.cv-seg button:last-child { border-right: 0; }
+.cv-seg button:hover { background: rgba(231, 229, 228, .5); }
+.cv-seg button[aria-pressed="true"] { background: var(--rule); color: var(--color-bg); box-shadow: none; }
+.cv-todo-btn, .cv-ghost, .cv-chip-sc { border-radius: 0; border: 1px solid var(--rule); color: var(--rule); background: transparent; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; transition: background-color .2s, color .2s; }
+.cv-todo-btn:hover, .cv-ghost:hover, .cv-chip-sc:hover { background: rgba(231, 229, 228, .5); border-color: var(--rule); }
+.cv-pdf, .cv-an-vai { border-radius: 0; background: var(--rule); color: var(--color-bg); border: 1px solid var(--rule); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; transition: background-color .2s; }
+.cv-pdf:hover, .cv-an-vai:hover { background: var(--accent); border-color: var(--accent); }
+.cv-chip, .cv-alert-chip { border-radius: 2px; font-family: var(--font-mono); font-size: 11px; }
+.cv-linkbtn { border-bottom-color: var(--accent); }
+.cv-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); }
+.cv-lever input[type="range"]::-webkit-slider-thumb { border-radius: 0; box-shadow: none; }
+.cv-lever input[type="range"]::-moz-range-thumb { border-radius: 0; }
+.cv-lever-val { font-family: var(--font-mono); font-weight: 500; }
+
+/* Tabelle */
+.cv-table th { font-family: var(--font-mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--color-fg-muted); border-top: 1px solid var(--s800); border-bottom: 1px solid var(--s800); }
+.cv-table td { font-size: 14px; }
+.cv-table td.num { font-family: var(--font-mono); font-size: 13px; }
+.cv-table tbody tr.cv-click:hover { background: var(--color-bg); }
+.cv-table tbody tr[aria-selected="true"] { background: var(--deep); }
+.cv-table tr.cv-totrow td { border-top: 1px solid var(--rule); border-bottom: 2px solid var(--rule); }
+
+/* Valori critici: senza rosso, in inchiostro e sottolineati in ambra */
+.cv-neg { color: var(--color-fg); font-weight: 700; text-decoration: underline; text-decoration-color: var(--color-warn); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.cv-az-alert { border-left: 3px solid var(--color-warn); }
+.cv-az-valore, .cv-an-valore, .cv-an-lista b { color: var(--accent); font-family: var(--font-mono); font-weight: 500; }
+
+/* Grafici: assi in mono */
+.cv-trendbox text { font-family: var(--font-mono); font-size: 11px; fill: var(--meta); }
+.cv-trendbox text.cv-trend-val, .cv-trendbox text.cv-trend-scelto { fill: var(--rule); }
+.cv-legend { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* Piede */
+.piede { border-top: 2px solid var(--rule); font-family: var(--font-mono); font-size: 11.5px; }
+.piede .piede-cta { font-family: var(--font-sans); border-bottom-color: var(--accent); }

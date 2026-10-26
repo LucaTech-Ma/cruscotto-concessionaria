@@ -8,17 +8,18 @@
 <meta name="description" content="Demo: i numeri del mese di una concessionaria multimarca (Jeep, BYD, Volkswagen), dove potevi guadagnare e vendere di più, con dati di esempio.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=20261021d">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css?v=20261026a">
 </head>
 <body>
 <main class="wrap" id="dash-root">
 <div class="cv">
 
   <header class="cv-top">
-    <div class="cv-top-row">
-      <div class="cv-logo">Concessionaria Demo</div>
-      <span class="cv-tag">Dati di esempio</span>
+    <div class="cv-mast-top"><span>Concessionaria Demo · Report direzionale</span><span class="cv-tag">Dati di esempio</span></div>
+    <div>
+      <h1 class="cv-mast-h1">Cruscotto della concessionaria</h1>
+      <p class="cv-dek">I numeri del mese, da dove arriva il margine e dove potevi guadagnare o vendere di più.</p>
     </div>
     <div class="cv-toolbar" id="filtri">
       <select class="cv-select" id="sel-mese" aria-label="Mese" data-source="contratti"></select>
@@ -36,7 +37,8 @@
   <!-- 1. I numeri chiave del mese -->
   <section class="cv-sec" aria-labelledby="titolo-numeri">
     <div>
-      <h1 class="cv-h2" id="titolo-numeri">Il mese</h1>
+      <p class="cv-kicker">I numeri chiave</p>
+      <h2 class="cv-h2" id="titolo-numeri">Il mese</h2>
       <p class="cv-note">Ogni numero è confrontato con il mese prima allo stesso giorno. Importi IVA esclusa.</p>
     </div>
     <div class="cv-tre cv-quattro">
@@ -50,6 +52,7 @@
   <!-- 2. Cosa ha portato margine, e le due domande -->
   <section class="cv-sec" aria-labelledby="titolo-dettagli">
     <div>
+      <p class="cv-kicker">Analisi</p>
       <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine</h2>
       <p class="cv-note">Da dove viene il margine del mese, e come si divide tra marchi, modelli e venditori.</p>
     </div>
@@ -75,11 +78,13 @@
     </div>
     <div class="cv-domande">
       <div class="cv-domanda">
+        <p class="cv-kicker">Margine</p>
         <h3 class="cv-h3">Dove potevi guadagnare di più</h3>
         <p class="cv-note">Sconti oltre la media e auto vendute sotto costo. Tocca una voce per il perché e cosa cambiare.</p>
         <ol class="cv-azioni" id="d-margine"></ol>
       </div>
       <div class="cv-domanda">
+        <p class="cv-kicker">Vendite</p>
         <h3 class="cv-h3">Dove potevi vendere di più</h3>
         <p class="cv-note">Alert sui venditori con meno finanziamenti o polizze dei colleghi, o con poche vendite. Tocca una voce per il perché e cosa cambiare.</p>
         <ol class="cv-azioni" id="d-vendite"></ol>
@@ -90,7 +95,10 @@
 
   <!-- 3. Per approfondire: simulatore, andamento per mese, venditori -->
   <section class="cv-sec cv-terza" aria-labelledby="titolo-approfondire">
-    <h2 class="cv-h2" id="titolo-approfondire">Per approfondire</h2>
+    <div>
+      <p class="cv-kicker">Approfondimento</p>
+      <h2 class="cv-h2" id="titolo-approfondire">Per approfondire</h2>
+    </div>
 
     <article class="cv-card" id="sez-simula">
       <div class="cv-card-head"><h3>Simulatore</h3></div>
@@ -128,7 +136,7 @@
 
     <article class="cv-card" id="card-venditori">
       <div class="cv-card-head"><h3 id="titolo-venditori">Venditori</h3></div>
-      <p class="cv-note">Ordinati per margine. In rosso i numeri che hanno fatto scattare una regola.</p>
+      <p class="cv-note">Ordinati per margine. Sottolineati i numeri che hanno fatto scattare una regola.</p>
       <div class="cv-tablebox">
         <table class="cv-table" id="tab-venditori">
           <thead><tr>
@@ -155,8 +163,8 @@
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="data/contratti.js?v=20261021d"></script>
-<script src="assets/dash.js?v=20261021d"></script>
-<script src="assets/app.js?v=20261021d"></script>
+<script src="data/contratti.js?v=20261026a"></script>
+<script src="assets/dash.js?v=20261026a"></script>
+<script src="assets/app.js?v=20261026a"></script>
 </body>
 </html>
