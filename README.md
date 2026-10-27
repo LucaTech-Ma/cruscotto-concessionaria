@@ -3,6 +3,7 @@
 > **Validazione parziale.**
 > - ✅ **Validato** (2026-10-20): versione executive, nessun obiettivo suggerito, e i principi delle regole (stesso marchio, niente rumore).
 > - ✅ **Deciso da Luca** (2026-10-21): restano solo tre regole di esempio (SCO-01, FIN-02/ASS-02, VEN-01); le altre sono tolte. Aggiunto un alert sui venditori con poche vendite (VOL-01), insieme a quelli su finanziamenti e polizze.
+> - ✅ **Corretto su richiesta di Luca** (2026-10-27, dopo la revisione "da titolare"): VEN-01 segnala solo le auto in perdita anche dopo finanziamento e polizza, e il suo valore è la perdita netta stimata sul mese; la frase sul venditore che rende meno confronta con la media dei marchi che vende, non con la media di tutti.
 > - **⚠ NON VALIDATO:** le soglie delle regole (1,2 punti di sconto, 12 punti di finanziamenti o polizze, almeno 5 auto, test al 95%; per VOL-01 il 60% della media dei colleghi con almeno 5 contratti di media), la definizione di "sotto costo" (oggi comprende i bonus del brand legati agli obiettivi) e i comportamenti inseriti nei dati demo.
 
 Demo di una webapp per concessionari multimarca: ogni sera i contratti della giornata arrivano dal gestionale e il cruscotto mostra vendite, margini, F&I e usato da permute.
@@ -30,7 +31,7 @@ Fino al 20/10/2026 c'erano anche la barra dell'obiettivo del mese, la sezione "A
    |---|---|---|
    | SCO-01 | Fuori dalla norma | Un venditore concede almeno 1,2 punti di sconto in più dei colleghi dello stesso marchio |
    | FIN-02, ASS-02 | Fuori dalla norma | Un venditore ha almeno 12 punti in meno di finanziamenti (o polizze) dei colleghi dello stesso marchio |
-   | VEN-01 | Regola violata | Auto vendute sotto costo |
+   | VEN-01 | Regola violata | Auto vendute in perdita anche contando finanziamento e polizza (dal 27/10; prima bastava la perdita sulla sola vendita) |
    | VOL-01 | Fuori dalla norma | Un venditore chiude al massimo il 60% della media dei colleghi dello stesso marchio, se i colleghi ne chiudono almeno 5 (aggiunta il 21/10) |
 
    Fino al 20/10 c'erano anche regole su peggioramenti rispetto al periodo precedente, modelli poco redditizi, sconti alti senza finanziamento, usato fermo e rischi di concentrazione: sono state tolte il 21/10 e restano nella storia del repository.

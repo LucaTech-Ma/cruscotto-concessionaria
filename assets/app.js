@@ -151,6 +151,9 @@ const eur = (v) => (vuoto(v) ? '—' : fEur.format(Number(v)));
 const eur2 = (v) => (vuoto(v) ? '—' : fEur2.format(Number(v)));
 const num = (v) => (vuoto(v) ? '—' : fNum.format(Number(v)));
 const pct = (v) => (vuoto(v) ? '—' : fPct.format(Number(v)));
+// Articolo davanti a una percentuale: "l'8%", "l'11%", "il 18%".
+const artPct = (v) => (/^(8|11?(%|,))/.test(pct(v)) ? "l'" : 'il ');
+const ilPct = (v) => artPct(v) + pct(v);
 const segno = (v, f) => (v > 0 ? '+' : v < 0 ? '−' : '±') + f(Math.abs(v));
 const FMT = {
   int: num, eur, eur2, pct,
@@ -485,14 +488,14 @@ function analizzaPeriodo(righe, per, brand) {
       if (A.pf - M.pf >= 0.12 && zFin >= Z_MIN && Q.mf > 0) segnali.push({
         codice: 'FIN-02', chi: v, tipo: 'Fuori dalla norma', titolo: `${v} propone meno finanziamenti${su(br)}`,
         valore: mie.length * (A.pf - M.pf) * Q.mf * alMese, fid: affid(zFin, mie.length),
-        perche: [txt('Il '), b(pct(M.pf)), txt(` delle sue auto ${br} ha un finanziamento, contro il ${pct(A.pf)} dei colleghi. Ogni finanziamento vale in media ${eur(Q.mf)} di margine.`)],
+        perche: [txt(maiusc(artPct(M.pf))), b(pct(M.pf)), txt(` delle sue auto ${br} ha un finanziamento, contro ${ilPct(A.pf)} dei colleghi. Ogni finanziamento vale in media ${eur(Q.mf)} di margine.`)],
         azione: `Affianca ${v} in qualche trattativa: il finanziamento va proposto prima di chiudere sul prezzo, non dopo.`,
         leva: { k: 'pf', d: (A.pf - M.pf) * (mie.length / C.N) },
       });
       if (A.pa - M.pa >= 0.12 && zAss >= Z_MIN && Q.ma > 0) segnali.push({
         codice: 'ASS-02', chi: v, tipo: 'Fuori dalla norma', titolo: `${v} propone meno assicurazioni${su(br)}`,
         valore: mie.length * (A.pa - M.pa) * Q.ma * alMese, fid: affid(zAss, mie.length),
-        perche: [txt('Il '), b(pct(M.pa)), txt(` delle sue auto ${br} esce con una polizza, contro il ${pct(A.pa)} dei colleghi. Ogni polizza vale in media ${eur(Q.ma)} di margine.`)],
+        perche: [txt(maiusc(artPct(M.pa))), b(pct(M.pa)), txt(` delle sue auto ${br} esce con una polizza, contro ${ilPct(A.pa)} dei colleghi. Ogni polizza vale in media ${eur(Q.ma)} di margine.`)],
         azione: `Controlla con ${v} come presenta le polizze: meglio dentro la rata che come voce a parte.`,
         leva: { k: 'pa', d: (A.pa - M.pa) * (mie.length / C.N) },
       });
@@ -508,24 +511,38 @@ function analizzaPeriodo(righe, per, brand) {
     nomi.forEach((v) => {
       const mie = qui.filter((r) => r.venditore === v).length;
       const media = (qui.length - mie) / (nomi.length - 1);
+      const colleghi = nomi.filter((x) => x !== v);
+      const contro = colleghi.length === 1
+        ? `contro i ${num(qui.length - mie)} di ${colleghi[0]}, l'altro venditore ${br}`
+        : `contro una media di ${num(Math.round(media * 10) / 10)} degli altri venditori del marchio`;
       if (media >= 5 && mie <= media * 0.6) segnali.push({
         codice: 'VOL-01', chi: v, tipo: 'Fuori dalla norma', titolo: `${v} vende meno dei colleghi${su(br)}`,
         valore: (media - mie) * (Q.mt / Q.N) * alMese, fid: mie <= media * 0.4 ? 'media' : 'bassa',
-        perche: [txt('Ha chiuso '), b(`${num(mie)} ${mie === 1 ? 'contratto' : 'contratti'} ${br}`), txt(`, contro una media di ${num(Math.round(media * 10) / 10)} degli altri venditori del marchio. Ogni contratto ${br} vale in media ${eur(Q.mt / Q.N)} di margine.`)],
+        perche: [txt('Ha chiuso '), b(`${num(mie)} ${mie === 1 ? 'contratto' : 'contratti'} ${br}`), txt(`, ${contro}. Ogni contratto ${br} vale in media ${eur(Q.mt / Q.N)} di margine.`)],
         azione: `Guarda con ${v} trattative aperte e contatti ricevuti: se ne riceve meno degli altri è un tema di distribuzione dei contatti, se li riceve ma non chiude è un tema di vendita.`,
       });
     });
   });
 
-  // Regole violate: auto vendute sotto costo
+  // Regole violate: auto vendute in perdita anche dopo finanziamento e polizza (decisione di Luca, 27/10).
+  // Un'auto sotto costo che rientra con finanziamento e polizza è una vendita in utile: non si segnala.
   const sotto = cur.filter((r) => r.margine_veicolo < 0);
-  if (sotto.length) {
+  const inPerdita = sotto.filter((r) => r.margine_totale < 0);
+  if (inPerdita.length) {
     const persi = -somma(sotto, (r) => r.margine_veicolo), ripresi = somma(sotto, (r) => r.margine_fi);
+    const netti = -somma(inPerdita, (r) => r.margine_totale), P = inPerdita.length, rientrate = sotto.length - P;
+    const vendute = (k) => `${num(k)} ${k === 1 ? 'auto venduta' : 'auto vendute'}`;
     segnali.push({
-      codice: 'VEN-01', tipo: 'Regola violata', titolo: `${num(sotto.length)} ${sotto.length === 1 ? 'auto venduta' : 'auto vendute'} sotto costo`,
-      valore: persi * alMese, fid: 'alta',
-      perche: [txt('Hanno perso '), b(eur(persi)), txt(' sulla vendita'), txt(ripresi > 0 ? `; finanziamenti e assicurazioni ne hanno recuperati ${eur(ripresi)}.` : '.')],
-      azione: 'Nessuna auto sotto costo senza la tua firma. Per ognuna guarda la causa: sconto, valutazione della permuta o costi di preparazione.',
+      codice: 'VEN-01', tipo: 'Regola violata', titolo: `${vendute(P)} in perdita`, n: P,
+      valore: netti * alMese, fid: 'alta',
+      perche: [
+        ...(rientrate > 0
+          ? [txt(`In tutto ${vendute(sotto.length)} sotto costo: hanno perso ${eur(persi)} sulla vendita, finanziamenti e assicurazioni ne hanno recuperati ${eur(ripresi)}. ${num(rientrate)} ${rientrate === 1 ? 'è rientrata' : 'sono rientrate'} in utile, `),
+            b(`${P === 1 ? "l'altra resta" : `le altre ${num(P)} restano`} in perdita per ${eur(netti)}`), txt('.')]
+          : [txt('Anche contando finanziamenti e assicurazioni hanno perso '), b(eur(netti)), txt('.')]),
+        txt(alMese > 1.1 ? ` Su un mese intero sono circa ${eur(stima(netti * alMese))}.` : ''),
+      ],
+      azione: 'Nessuna auto in perdita senza la tua firma. Per ognuna guarda la causa: sconto, valutazione della permuta o costi di preparazione.',
     });
   }
 
@@ -556,7 +573,7 @@ const AZIONE_BREVE = {
   'SCO-01': (s) => `Riporta gli sconti di ${s.chi} nella media`,
   'FIN-02': (s) => `Fai proporre più finanziamenti a ${s.chi}`,
   'ASS-02': (s) => `Fai proporre più polizze a ${s.chi}`,
-  'VEN-01': () => 'Ferma le vendite sotto costo',
+  'VEN-01': (s) => (s.n === 1 ? "Rivedi l'auto venduta in perdita" : `Rivedi le ${num(s.n)} auto vendute in perdita`),
   'VOL-01': (s) => `Segui da vicino ${s.chi}`,
 };
 
@@ -678,7 +695,7 @@ function ripartizioni(contratti, marg, mese, brand) {
   const primo = marchi[0];
   const perResa = marchi.slice().sort((a, c) => c.medio - a.medio);
   out.letture.marchi = [
-    [b(primo.nome), txt(` porta il ${pct(primo.mt / totM)} del margine con il ${pct(primo.n / nM)} dei contratti.`)],
+    [b(primo.nome), txt(` porta ${ilPct(primo.mt / totM)} del margine con ${ilPct(primo.n / nM)} dei contratti.`)],
     perResa.length > 1 ? [txt('Rende di più a contratto '), b(perResa[0].nome), txt(` (${eur(perResa[0].medio)}), di meno `), b(perResa[perResa.length - 1].nome), txt(` (${eur(perResa[perResa.length - 1].medio)}); la media è ${eur(medioM)}.`)] : null,
   ].filter(Boolean);
 
@@ -690,18 +707,25 @@ function ripartizioni(contratti, marg, mese, brand) {
   $('#altri-modelli').textContent = resto.length ? `Altri ${num(resto.length)} modelli: ${eur(d3.sum(resto, (x) => x.mt))} di margine (${pct(d3.sum(resto, (x) => x.mt) / totS)}).` : '';
   const solidi = modelli.filter((x) => x.n >= 3).sort((a, c) => c.medio - a.medio);
   out.letture.modelli = [
-    [b(modelli[0].nome), txt(` è il modello che porta più margine: ${eur(modelli[0].mt)}, il ${pct(modelli[0].mt / totS)} del totale.`)],
+    [b(modelli[0].nome), txt(` è il modello che porta più margine: ${eur(modelli[0].mt)}, ${ilPct(modelli[0].mt / totS)} del totale.`)],
     solidi.length > 1 ? [txt('A contratto rende di più '), b(solidi[0].nome), txt(` (${eur(solidi[0].medio)}), di meno `), b(solidi[solidi.length - 1].nome), txt(` (${eur(solidi[solidi.length - 1].medio)}), contro una media di ${eur(medioS)}.`)] : null,
   ].filter(Boolean);
 
-  // Venditori del marchio scelto
+  // Venditori del marchio scelto. La resa di ognuno si confronta con la media dei marchi che vende:
+  // chi vende solo BYD rende meno di chi vende Jeep per il mix, non per come vende.
   const vend = aggrega(sel, (r) => r.venditore);
   barre($('#split-venditori'), vend, totS);
   const primi2 = vend.slice(0, 2), quotaPrimi = d3.sum(primi2, (x) => x.mt) / totS;
-  const basso = vend.filter((x) => x.n >= 3).sort((a, c) => a.medio - c.medio)[0];
+  const mediaMarchio = new Map(marchi.map((x) => [x.nome, x.medio]));
+  vend.forEach((x) => {
+    const mie = sel.filter((r) => r.venditore === x.nome);
+    x.atteso = d3.mean(mie, (r) => mediaMarchio.get(r.brand));
+    x.suoiMarchi = [...new Set(mie.map((r) => r.brand))];
+  });
+  const basso = vend.filter((x) => x.n >= 3 && x.atteso > 0 && x.medio < x.atteso).sort((a, c) => a.medio / a.atteso - c.medio / c.atteso)[0];
   out.letture.venditori = [
-    vend.length > 2 ? [txt('I primi due venditori, '), b(primi2.map((x) => x.nome).join(' e ')), txt(`, portano il ${pct(quotaPrimi)} del margine.`)] : null,
-    basso && basso.medio < medioS ? [b(basso.nome), txt(` rende ${eur(basso.medio)} a contratto, il ${pct(1 - basso.medio / medioS)} in meno della media (${eur(medioS)}).`)] : null,
+    vend.length > 2 ? [txt('I primi due venditori, '), b(primi2.map((x) => x.nome).join(' e ')), txt(`, portano ${ilPct(quotaPrimi)} del margine.`)] : null,
+    basso ? [b(basso.nome), txt(` rende ${eur(basso.medio)} a contratto, ${ilPct(1 - basso.medio / basso.atteso)} in meno della media ${basso.suoiMarchi.length === 1 ? basso.suoiMarchi[0] : 'dei marchi che vende'} (${eur(basso.atteso)}).`)] : null,
   ].filter(Boolean);
 
   ['marchi', 'modelli', 'venditori'].forEach((id) => {
@@ -762,7 +786,7 @@ function domande(contratti, marg, brand, mese) {
     margine: A.segnali.filter((s) => PER_DOMANDA.margine.includes(s.codice)),
     vendite: alertVenditori(A.segnali.filter((s) => PER_DOMANDA.vendite.includes(s.codice))),
   };
-  listaAzioni($('#d-margine'), gruppi.margine, A.C.N, 'Niente da segnalare: sconti in linea tra i venditori e nessuna auto venduta sotto costo.');
+  listaAzioni($('#d-margine'), gruppi.margine, A.C.N, 'Niente da segnalare: sconti in linea tra i venditori e nessuna auto venduta in perdita.');
   listaAzioni($('#d-vendite'), gruppi.vendite, A.C.N, 'Nessun alert: ogni venditore propone finanziamenti e polizze e vende quanto i colleghi.');
   return gruppi;
 }
@@ -975,7 +999,7 @@ function scaricaReport() {
       y += 1.5;
     });
   };
-  domanda('Dove potevi guadagnare di più', gruppi.margine, 'Niente da segnalare: sconti in linea tra i venditori e nessuna auto venduta sotto costo.');
+  domanda('Dove potevi guadagnare di più', gruppi.margine, 'Niente da segnalare: sconti in linea tra i venditori e nessuna auto venduta in perdita.');
   domanda('Dove potevi vendere di più', gruppi.vendite, 'Nessun alert: ogni venditore propone finanziamenti e polizze e vende quanto i colleghi.');
   paragrafo('Stime al mese, arrotondate: i valori in parte si sovrappongono. Regole di esempio, con soglie da tarare sui dati della concessionaria.', M, CW, 8);
 
