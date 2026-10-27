@@ -14,13 +14,13 @@ I dati sono **fittizi ma verosimili**: 674 contratti Jeep, BYD e Volkswagen, dal
 
 Versione executive in tre sezioni (decisa da Luca il 21/10/2026). Regola: **per un executive meno rumore è meglio**. Quattro numeri, due domande con cosa cambiare, il resto in fondo. Si legge per mese e per marchio, scelti in alto.
 
-**Le schede** (dal 27/10/2026, su un feedback esterno scelto da Luca: "non tutta la sbrodolata subito"). Filtri e quattro numeri chiave restano sempre in vista; sotto, quattro schede raggruppate per domanda del titolare:
-- **Cosa fare** (si apre per prima): le due domande con le voci;
-- **Margine**: le tre fonti, le ripartizioni per marchio e per modello, l'andamento per mese;
+**Le schede** (dal 27/10/2026, su un feedback esterno scelto da Luca: "non tutta la sbrodolata subito"). Filtri e quattro numeri chiave restano sempre in vista; sotto, quattro schede raggruppate per domanda del titolare, nell'ordine deciso da Luca il 27/10:
+- **Margine** (si apre per prima): le tre fonti, le ripartizioni per marchio e per modello, l'andamento per mese;
 - **Venditori**: la ripartizione per venditore e la tabella;
+- **Cosa fare**: le due domande con le voci;
 - **Simulatore**.
 
-Ogni scheda ha il suo indirizzo (`#fare`, `#margine`, `#venditori`, `#simulatore`), utile per mandare un link a una scheda precisa. "Simula questa azione" apre la scheda Simulatore. Il report PDF resta completo. Le sezioni descritte sotto sono le stesse, solo distribuite nelle schede.
+Ogni scheda ha il suo indirizzo (`#margine`, `#venditori`, `#fare`, `#simulatore`), utile per mandare un link a una scheda precisa. "Simula questa azione" apre la scheda Simulatore. Il report PDF resta completo. Le sezioni descritte sotto sono le stesse, solo distribuite nelle schede.
 
 1. **I numeri chiave**: fatturato, margine, margine per contratto e numero di contratti, ognuno confrontato con il mese prima allo stesso giorno.
 2. **Cosa ha portato margine** (rivista il 21/10/2026):

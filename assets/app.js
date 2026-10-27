@@ -606,10 +606,10 @@ $$('#seg-trend button').forEach((x) => x.addEventListener('click', () => { vista
 $('#btn-pdf').addEventListener('click', () => scaricaReport());
 
 // Schede (feedback esterno del 27/10): i numeri chiave restano sempre in vista, il resto si apre solo se serve.
-// La prima scheda dice cosa fare; le altre spiegano il perché. Il PDF resta completo.
-const SCHEDE = ['fare', 'margine', 'venditori', 'simulatore'];
+// Ordine deciso da Luca: prima da dove arriva il margine e chi lo porta, poi cosa fare. Il PDF resta completo.
+const SCHEDE = ['margine', 'venditori', 'fare', 'simulatore'];
 function apriScheda(nome, avvio = false) {
-  if (!SCHEDE.includes(nome)) nome = 'fare';
+  if (!SCHEDE.includes(nome)) nome = SCHEDE[0];
   $$('#schede [role="tab"]').forEach((t) => {
     const on = t.dataset.scheda === nome;
     t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;

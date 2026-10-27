@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=20261027b">
+<link rel="stylesheet" href="assets/style.css?v=20261027c">
 </head>
 <body>
 <main class="wrap" id="dash-root">
@@ -49,16 +49,16 @@
     </div>
   </section>
 
-  <!-- 2. Le schede: prima cosa fare, poi il perché (feedback esterno del 27/10: non tutto subito) -->
+  <!-- 2. Le schede (feedback esterno del 27/10: non tutto subito; ordine deciso da Luca: Margine, Venditori, Cosa fare, Simulatore) -->
   <nav class="cv-tabs" id="schede" role="tablist" aria-label="Sezioni del cruscotto">
-    <button role="tab" id="tab-fare" data-scheda="fare" aria-controls="scheda-fare" aria-selected="true">Cosa fare</button>
-    <button role="tab" id="tab-margine" data-scheda="margine" aria-controls="scheda-margine" aria-selected="false" tabindex="-1">Margine</button>
+    <button role="tab" id="tab-margine" data-scheda="margine" aria-controls="scheda-margine" aria-selected="true">Margine</button>
     <button role="tab" id="tab-venditori" data-scheda="venditori" aria-controls="scheda-venditori" aria-selected="false" tabindex="-1">Venditori</button>
+    <button role="tab" id="tab-fare" data-scheda="fare" aria-controls="scheda-fare" aria-selected="false" tabindex="-1">Cosa fare</button>
     <button role="tab" id="tab-simulatore" data-scheda="simulatore" aria-controls="scheda-simulatore" aria-selected="false" tabindex="-1">Simulatore</button>
   </nav>
 
   <!-- Cosa fare: le due domande -->
-  <section class="cv-sec" id="scheda-fare" role="tabpanel" aria-labelledby="tab-fare">
+  <section class="cv-sec" id="scheda-fare" role="tabpanel" aria-labelledby="tab-fare" hidden>
     <div class="cv-domande">
       <div class="cv-domanda">
         <p class="cv-kicker">Margine</p>
@@ -77,7 +77,7 @@
   </section>
 
   <!-- Margine: le tre fonti, marchi e modelli, andamento per mese -->
-  <section class="cv-sec" id="scheda-margine" role="tabpanel" aria-labelledby="tab-margine" hidden>
+  <section class="cv-sec" id="scheda-margine" role="tabpanel" aria-labelledby="tab-margine">
     <div>
       <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine</h2>
       <p class="cv-note">Da dove viene il margine del mese, e come si divide tra marchi e modelli.</p>
@@ -173,8 +173,8 @@
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="data/contratti.js?v=20261027b"></script>
-<script src="assets/dash.js?v=20261027b"></script>
-<script src="assets/app.js?v=20261027b"></script>
+<script src="data/contratti.js?v=20261027c"></script>
+<script src="assets/dash.js?v=20261027c"></script>
+<script src="assets/app.js?v=20261027c"></script>
 </body>
 </html>
