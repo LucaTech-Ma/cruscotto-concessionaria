@@ -493,3 +493,17 @@ body { background: var(--color-bg); }
 /* Piede */
 .piede { border-top: 2px solid var(--rule); font-family: var(--font-mono); font-size: 11.5px; }
 .piede .piede-cta { font-family: var(--font-sans); border-bottom-color: var(--accent); }
+
+/* Schede (dal 27/10): prima cosa fare, poi il perché. Sotto i numeri chiave, sempre visibili. */
+.cv-tabs#schede { gap: 28px; border-bottom: 1px solid var(--rule); margin-bottom: -4px; }
+.cv-tabs#schede button { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--meta); padding: 12px 0 10px; }
+.cv-tabs#schede button:hover { color: var(--rule); }
+.cv-tabs#schede button[aria-selected="true"] { color: var(--rule); border-bottom-color: var(--accent); }
+.cv-tabs#schede button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cv-split.cv-split-due { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Venditori: la tabella ha otto colonne e vuole tutta la larghezza; le barre si dispongono su tre colonne. */
+.cv-split.cv-split-vend { grid-template-columns: minmax(0, 1fr); }
+.cv-split-vend .cv-barre { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 28px; }
+@media (max-width: 900px) { .cv-split-vend .cv-barre { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1000px) { .cv-split.cv-split-due { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .cv-tabs#schede { gap: 20px; } .cv-tabs#schede button { font-size: 11px; letter-spacing: .08em; } }

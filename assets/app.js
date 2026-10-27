@@ -565,7 +565,8 @@ function apriNelSimulatore(leva) {
   const x = B.v[leva.k] + leva.d;
   sim.v = { ...B.v, [leva.k]: leva.k === 'g' ? Math.max(5, x) : Math.min(1, Math.max(0, x)) };
   mostraSimulazione(true);
-  $('#sez-simula').scrollIntoView({ block: 'start', behavior: RIDOTTO ? 'auto' : 'smooth' });
+  apriScheda('simulatore');
+  $('#schede').scrollIntoView({ block: 'start', behavior: RIDOTTO ? 'auto' : 'smooth' });
 }
 
 // Titoli brevi da titolare: cosa fare, non cosa è successo. Il dettaglio resta nel "perché".
@@ -603,6 +604,31 @@ $('#sel-mese').addEventListener('change', (e) => dash.setParams({ mese: e.target
 $$('#seg-brand button').forEach((x) => x.addEventListener('click', () => dash.setParams({ brand: x.dataset.brand })));
 $$('#seg-trend button').forEach((x) => x.addEventListener('click', () => { vista.trend = x.dataset.misura; disegna(); }));
 $('#btn-pdf').addEventListener('click', () => scaricaReport());
+
+// Schede (feedback esterno del 27/10): i numeri chiave restano sempre in vista, il resto si apre solo se serve.
+// La prima scheda dice cosa fare; le altre spiegano il perché. Il PDF resta completo.
+const SCHEDE = ['fare', 'margine', 'venditori', 'simulatore'];
+function apriScheda(nome, avvio = false) {
+  if (!SCHEDE.includes(nome)) nome = 'fare';
+  $$('#schede [role="tab"]').forEach((t) => {
+    const on = t.dataset.scheda === nome;
+    t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
+  });
+  SCHEDE.forEach((s) => { $(`#scheda-${s}`).hidden = s !== nome; });
+  // All'avvio la pagina non è ancora disegnata: ci pensa il primo caricamento dei dati.
+  if (avvio) return;
+  dash.setLink(nome);
+  // Il grafico dell'andamento si misura sulla larghezza della scheda: va ridisegnato quando diventa visibile.
+  if (nome === 'margine') disegna();
+}
+$$('#schede [role="tab"]').forEach((t) => t.addEventListener('click', () => apriScheda(t.dataset.scheda)));
+$('#schede').addEventListener('keydown', (e) => {
+  const passo = { ArrowRight: 1, ArrowLeft: -1 }[e.key]; if (!passo) return;
+  const i = SCHEDE.indexOf($('#schede [aria-selected="true"]').dataset.scheda);
+  const nome = SCHEDE[(i + passo + SCHEDE.length) % SCHEDE.length];
+  apriScheda(nome); $(`#tab-${nome}`).focus(); e.preventDefault();
+});
+apriScheda(location.hash.slice(1), true);
 
 /* ---------- 1. I numeri chiave ---------- */
 const confronto = (box, v, r, f, prima) => {

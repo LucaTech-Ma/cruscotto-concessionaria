@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="assets/style.css?v=20261027a">
+<link rel="stylesheet" href="assets/style.css?v=20261027b">
 </head>
 <body>
 <main class="wrap" id="dash-root">
@@ -49,33 +49,16 @@
     </div>
   </section>
 
-  <!-- 2. Cosa ha portato margine, e le due domande -->
-  <section class="cv-sec" aria-labelledby="titolo-dettagli">
-    <div>
-      <p class="cv-kicker">Analisi</p>
-      <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine</h2>
-      <p class="cv-note">Da dove viene il margine del mese, e come si divide tra marchi, modelli e venditori.</p>
-    </div>
-    <div class="cv-mix" id="fonti-barra" aria-hidden="true"></div>
-    <div class="cv-fonti" id="fonti"></div>
-    <div class="cv-split">
-      <article class="cv-qcard cv-splitcard">
-        <div class="cv-qlabel">Per marchio</div>
-        <div class="cv-insight" id="ins-marchi"></div>
-        <div class="cv-barre" id="split-marchi"></div>
-      </article>
-      <article class="cv-qcard cv-splitcard">
-        <div class="cv-qlabel">Per modello</div>
-        <div class="cv-insight" id="ins-modelli"></div>
-        <div class="cv-barre" id="split-modelli"></div>
-        <p class="cv-note" id="altri-modelli"></p>
-      </article>
-      <article class="cv-qcard cv-splitcard">
-        <div class="cv-qlabel">Per venditore</div>
-        <div class="cv-insight" id="ins-venditori"></div>
-        <div class="cv-barre" id="split-venditori"></div>
-      </article>
-    </div>
+  <!-- 2. Le schede: prima cosa fare, poi il perché (feedback esterno del 27/10: non tutto subito) -->
+  <nav class="cv-tabs" id="schede" role="tablist" aria-label="Sezioni del cruscotto">
+    <button role="tab" id="tab-fare" data-scheda="fare" aria-controls="scheda-fare" aria-selected="true">Cosa fare</button>
+    <button role="tab" id="tab-margine" data-scheda="margine" aria-controls="scheda-margine" aria-selected="false" tabindex="-1">Margine</button>
+    <button role="tab" id="tab-venditori" data-scheda="venditori" aria-controls="scheda-venditori" aria-selected="false" tabindex="-1">Venditori</button>
+    <button role="tab" id="tab-simulatore" data-scheda="simulatore" aria-controls="scheda-simulatore" aria-selected="false" tabindex="-1">Simulatore</button>
+  </nav>
+
+  <!-- Cosa fare: le due domande -->
+  <section class="cv-sec" id="scheda-fare" role="tabpanel" aria-labelledby="tab-fare">
     <div class="cv-domande">
       <div class="cv-domanda">
         <p class="cv-kicker">Margine</p>
@@ -93,13 +76,74 @@
     <p class="cv-note">Quanto puoi recuperare al mese, stimato e arrotondato: i valori in parte si sovrappongono. Regole di esempio, con soglie da tarare sui dati della concessionaria.</p>
   </section>
 
-  <!-- 3. Per approfondire: simulatore, andamento per mese, venditori -->
-  <section class="cv-sec cv-terza" aria-labelledby="titolo-approfondire">
+  <!-- Margine: le tre fonti, marchi e modelli, andamento per mese -->
+  <section class="cv-sec" id="scheda-margine" role="tabpanel" aria-labelledby="tab-margine" hidden>
     <div>
-      <p class="cv-kicker">Approfondimento</p>
-      <h2 class="cv-h2" id="titolo-approfondire">Per approfondire</h2>
+      <h2 class="cv-h2" id="titolo-dettagli">Cosa ha portato margine</h2>
+      <p class="cv-note">Da dove viene il margine del mese, e come si divide tra marchi e modelli.</p>
     </div>
+    <div class="cv-mix" id="fonti-barra" aria-hidden="true"></div>
+    <div class="cv-fonti" id="fonti"></div>
+    <div class="cv-split cv-split-due">
+      <article class="cv-qcard cv-splitcard">
+        <div class="cv-qlabel">Per marchio</div>
+        <div class="cv-insight" id="ins-marchi"></div>
+        <div class="cv-barre" id="split-marchi"></div>
+      </article>
+      <article class="cv-qcard cv-splitcard">
+        <div class="cv-qlabel">Per modello</div>
+        <div class="cv-insight" id="ins-modelli"></div>
+        <div class="cv-barre" id="split-modelli"></div>
+        <p class="cv-note" id="altri-modelli"></p>
+      </article>
+    </div>
+    <article class="cv-card" id="card-trend">
+      <div class="cv-card-head">
+        <h3>Andamento per mese</h3>
+        <div class="cv-seg cv-small" role="group" aria-label="Numero da vedere" id="seg-trend">
+          <button data-misura="fatturato_netto">Fatturato</button>
+          <button data-misura="margine_totale">Margine</button>
+          <button data-misura="margine_medio">Per contratto</button>
+          <button data-misura="vetture">Contratti</button>
+        </div>
+      </div>
+      <div class="cv-trendbox" id="trend"></div>
+      <p class="cv-note" id="trend-nota"></p>
+    </article>
+  </section>
 
+  <!-- Venditori: chi porta margine e la tabella -->
+  <section class="cv-sec" id="scheda-venditori" role="tabpanel" aria-labelledby="tab-venditori" hidden>
+    <div class="cv-split cv-split-vend">
+      <article class="cv-qcard cv-splitcard">
+        <div class="cv-qlabel">Per venditore</div>
+        <div class="cv-insight" id="ins-venditori"></div>
+        <div class="cv-barre" id="split-venditori"></div>
+      </article>
+      <article class="cv-card" id="card-venditori">
+        <div class="cv-card-head"><h3 id="titolo-venditori">Venditori</h3></div>
+        <p class="cv-note">Ordinati per margine. Sottolineati i numeri che hanno fatto scattare una regola.</p>
+        <div class="cv-tablebox">
+          <table class="cv-table" id="tab-venditori">
+            <thead><tr>
+              <th>Venditore</th>
+              <th class="num">Contratti</th>
+              <th class="num cv-hide-sm">Fatturato</th>
+              <th class="num">Margine</th>
+              <th class="num cv-hide-sm">Per contratto</th>
+              <th class="num cv-hide-sm">Sconto medio</th>
+              <th class="num cv-hide-sm">Con finanz.</th>
+              <th class="num cv-hide-sm">Con polizza</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Simulatore -->
+  <section class="cv-sec" id="scheda-simulatore" role="tabpanel" aria-labelledby="tab-simulatore" hidden>
     <article class="cv-card" id="sez-simula">
       <div class="cv-card-head"><h3>Simulatore</h3></div>
       <p class="cv-lead" id="sim-intro"></p>
@@ -119,40 +163,6 @@
         </div>
       </div>
     </article>
-
-    <article class="cv-card" id="card-trend">
-      <div class="cv-card-head">
-        <h3>Andamento per mese</h3>
-        <div class="cv-seg cv-small" role="group" aria-label="Numero da vedere" id="seg-trend">
-          <button data-misura="fatturato_netto">Fatturato</button>
-          <button data-misura="margine_totale">Margine</button>
-          <button data-misura="margine_medio">Per contratto</button>
-          <button data-misura="vetture">Contratti</button>
-        </div>
-      </div>
-      <div class="cv-trendbox" id="trend"></div>
-      <p class="cv-note" id="trend-nota"></p>
-    </article>
-
-    <article class="cv-card" id="card-venditori">
-      <div class="cv-card-head"><h3 id="titolo-venditori">Venditori</h3></div>
-      <p class="cv-note">Ordinati per margine. Sottolineati i numeri che hanno fatto scattare una regola.</p>
-      <div class="cv-tablebox">
-        <table class="cv-table" id="tab-venditori">
-          <thead><tr>
-            <th>Venditore</th>
-            <th class="num">Contratti</th>
-            <th class="num cv-hide-sm">Fatturato</th>
-            <th class="num">Margine</th>
-            <th class="num cv-hide-sm">Per contratto</th>
-            <th class="num cv-hide-sm">Sconto medio</th>
-            <th class="num cv-hide-sm">Con finanz.</th>
-            <th class="num cv-hide-sm">Con polizza</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </article>
   </section>
 
 </div>
@@ -163,8 +173,8 @@
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="data/contratti.js?v=20261027a"></script>
-<script src="assets/dash.js?v=20261027a"></script>
-<script src="assets/app.js?v=20261027a"></script>
+<script src="data/contratti.js?v=20261027b"></script>
+<script src="assets/dash.js?v=20261027b"></script>
+<script src="assets/app.js?v=20261027b"></script>
 </body>
 </html>
